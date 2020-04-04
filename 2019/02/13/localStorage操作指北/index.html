@@ -5,19 +5,19 @@
     
     <title>localStorage操作指北 | Moruo&#39;s Blog</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
-    <meta name="description" content="localStorage提供了持久化的本地存储能力，但是由于年代久远，（getItem的签名是06年4月16日提交的），它的设计导致使用并不十分便利。在实际的使用当中，我们还需要解决2个问题：  序列化 溢出">
+    <meta name="description" content="localStorage提供了持久化的本地存储能力，但是由于标准设计年代久远,（getItem的签名是06年4月16日提交的），导致使用并不十分便利。在实际的开发当中，我们还需要解决2个问题：  序列化 溢出">
 <meta name="keywords" content="javascript,localStorage">
 <meta property="og:type" content="article">
 <meta property="og:title" content="localStorage操作指北">
 <meta property="og:url" content="moruo.vip/2019/02/13/localStorage操作指北/index.html">
 <meta property="og:site_name" content="Moruo&#39;s Blog">
-<meta property="og:description" content="localStorage提供了持久化的本地存储能力，但是由于年代久远，（getItem的签名是06年4月16日提交的），它的设计导致使用并不十分便利。在实际的使用当中，我们还需要解决2个问题：  序列化 溢出">
+<meta property="og:description" content="localStorage提供了持久化的本地存储能力，但是由于标准设计年代久远,（getItem的签名是06年4月16日提交的），导致使用并不十分便利。在实际的开发当中，我们还需要解决2个问题：  序列化 溢出">
 <meta property="og:locale" content="zh-CN">
 <meta property="og:image" content="http://ww1.sinaimg.cn/large/ac03dbb3gy1gdhu4l2dvej21kd09gdhq.jpg">
-<meta property="og:updated_time" content="2020-04-04T11:02:26.048Z">
+<meta property="og:updated_time" content="2020-04-04T11:13:30.645Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="localStorage操作指北">
-<meta name="twitter:description" content="localStorage提供了持久化的本地存储能力，但是由于年代久远，（getItem的签名是06年4月16日提交的），它的设计导致使用并不十分便利。在实际的使用当中，我们还需要解决2个问题：  序列化 溢出">
+<meta name="twitter:description" content="localStorage提供了持久化的本地存储能力，但是由于标准设计年代久远,（getItem的签名是06年4月16日提交的），导致使用并不十分便利。在实际的开发当中，我们还需要解决2个问题：  序列化 溢出">
 <meta name="twitter:image" content="http://ww1.sinaimg.cn/large/ac03dbb3gy1gdhu4l2dvej21kd09gdhq.jpg">
     
 
@@ -247,13 +247,14 @@
         <div class="article-entry" itemprop="articleBody">
         
             
-            <p>localStorage提供了持久化的本地存储能力，但是由于年代久远，（getItem的签名是06年4月16日提交的），它的设计导致使用并不十分便利。在实际的使用当中，我们还需要解决2个问题：</p>
+            <p>localStorage提供了持久化的本地存储能力，但是由于标准设计年代久远,（getItem的签名是06年4月16日提交的），导致使用并不十分便利。在实际的开发当中，我们还需要解决2个问题：</p>
 <ul>
 <li>序列化</li>
 <li>溢出</li>
 </ul>
 <a id="more"></a>
-<h2 id="序列化"><a href="#序列化" class="headerlink" title="序列化"></a>序列化</h2><p>localStorage把序列化/反序列话的职责丢给用户，个人认为是不符合用户使用习惯的，稍微复杂的场景用起来很蛋疼。后续HTML标准的其他持久存储功能，比如IndexedDB，是自带序列化和反序列化的。而且localStorage 标准最早的草稿里是带序列化/反序列化的，但后来定稿中去掉了，具体原因未知。</p>
+<h2 id="序列化"><a href="#序列化" class="headerlink" title="序列化"></a>序列化</h2><p>localStorage把序列化/反序列话的职责丢给用户，个人认为是不符合用户使用习惯的，稍微复杂的场景用起来很蛋疼。</p>
+<p>后续HTML标准的其他持久存储功能，比如IndexedDB，是自带序列化和反序列化的。而且localStorage 标准最早的草稿里是带序列化/反序列化的，但后来定稿中去掉了，具体原因未知。</p>
 <p>localStorage存储的是字符串类型的数据，当使用setItem的时候会调用数据的<strong>toString</strong>方法，也就是说</p>
 <figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">[<span class="number">1</span>, <span class="number">2</span>] =&gt; <span class="string">"1, 2"</span></span><br><span class="line">&#123;&#125; =&gt; <span class="string">"[object Object]"</span></span><br></pre></td></tr></table></figure>
 <p>合理的做法是，存储JSON格式的字符串，并在getItem/setItem自动进行的序列化/反序列化</p>
@@ -272,7 +273,7 @@
 <p>User agents may prompt the user when quotas are reached, allowing the user to grant a site more space. This enables sites to store many user-created documents on the user’s computer, for instance.</p>
 </blockquote>
 <p>显然，<strong>主流浏览器并没有按照标准去实现</strong>，那我们看看<strong>事实标准</strong>是怎样的。</p>
-<p>localStorage可以存储的容量大小，通常被认为是5MB，但是安卓上手 Q 、手机QQ浏览器、微信中则是 2.5M 的数量级，因此在移动端，本地存储的 SIZE 更加珍贵。可以用<a href="http://dev-test.nemikor.com/web-storage/support-test/" target="_blank" rel="noopener">这个网站</a>测试localStorage的容量。</p>
+<p>localStorage可以存储的容量大小，通常被认为是5MB，但是安卓在上，手Q 、手机QQ浏览器、微信中则是 2.5M 的量级，因此在移动端，本地存储的 SIZE 更加珍贵。可以用<a href="http://dev-test.nemikor.com/web-storage/support-test/" target="_blank" rel="noopener">这个网站</a>测试localStorage的容量。</p>
 <h3 id="溢出了之后浏览器的行为"><a href="#溢出了之后浏览器的行为" class="headerlink" title="溢出了之后浏览器的行为"></a>溢出了之后浏览器的行为</h3><p>我们已经提过，标准规定超过容量限制时，浏览器需要提醒用户，询问用户是否同意扩容。但是我没有发现有浏览器是如此实现的。</p>
 <p>事实上，当localStorage溢出时，浏览器会抛出一个错误，并且不会存储这份数据，也不会覆盖现有数据。</p>
 <p>那么问题来了，这个错误的错误码是什么，各浏览器是否一致呢？</p>
@@ -283,7 +284,7 @@
 <p>已知：将要存储的数据a是string类型</p>
 <p>求：a会占用多少空间</p>
 <p>解：</p>
-<pre><code>js的字符串使用utf-16编码，一个string占用2位，所以长度位n的字符串占用的空间就是n * 2 / 1024 kb
+<pre><code>js的字符串使用utf-16编码，一个string占用2位，所以长度为n的字符串占用的空间就是n * 2 / 1024 KB
 </code></pre><p>测试：</p>
 <p><img src="http://ww1.sinaimg.cn/large/ac03dbb3gy1gdhu4l2dvej21kd09gdhq.jpg" alt="测试"></p>
 <p>参考：</p>
