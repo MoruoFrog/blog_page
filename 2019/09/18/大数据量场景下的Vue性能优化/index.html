@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang=zh>
+<head>
+    <meta charset="utf-8">
+    
+    <title>大数据量场景下的Vue性能优化 | Moruo&#39;s Blog</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+    <meta name="description" content="性能优化最常见的落脚点是在网络和dom上，但是在大数据量的场景下，由于Vue本身的特性，可能会造成js运行层面的性能问题，这篇文章讨论的就是针对这一部分的性能优化方案。 最终的结果会将一个2s的耗时减少到10ms">
+<meta name="keywords" content="Vue,性能优化">
+<meta property="og:type" content="article">
+<meta property="og:title" content="大数据量场景下的Vue性能优化">
+<meta property="og:url" content="moruo.vip/2019/09/18/大数据量场景下的Vue性能优化/index.html">
+<meta property="og:site_name" content="Moruo&#39;s Blog">
+<meta property="og:description" content="性能优化最常见的落脚点是在网络和dom上，但是在大数据量的场景下，由于Vue本身的特性，可能会造成js运行层面的性能问题，这篇文章讨论的就是针对这一部分的性能优化方案。 最终的结果会将一个2s的耗时减少到10ms">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="http://ww1.sinaimg.cn/large/ac03dbb3gy1g72s3pdo07j20sw0dndgk.jpg">
+<meta property="og:image" content="http://ww1.sinaimg.cn/large/ac03dbb3gy1g72skhoo6qj20u00ebmxu.jpg">
+<meta property="og:image" content="http://ww1.sinaimg.cn/large/ac03dbb3gy1g72t8kbgfxj20pb0ec0t9.jpg">
+<meta property="og:image" content="http://ww1.sinaimg.cn/large/ac03dbb3gy1g73tbr2izoj20xy0dyt9e.jpg">
+<meta property="og:updated_time" content="2020-01-06T07:54:49.484Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="大数据量场景下的Vue性能优化">
+<meta name="twitter:description" content="性能优化最常见的落脚点是在网络和dom上，但是在大数据量的场景下，由于Vue本身的特性，可能会造成js运行层面的性能问题，这篇文章讨论的就是针对这一部分的性能优化方案。 最终的结果会将一个2s的耗时减少到10ms">
+<meta name="twitter:image" content="http://ww1.sinaimg.cn/large/ac03dbb3gy1g72s3pdo07j20sw0dndgk.jpg">
+    
+
+    
+
+    
+        <link rel="icon" href="/css/images/favicon.ico" />
+    
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-120548962-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+
+        gtag('config', 'UA-120548962-1');
+    </script>
+
+    <link rel="stylesheet" href="/libs/font-awesome/css/font-awesome.min.css">
+    <link rel="stylesheet" href="/libs/open-sans/styles.css">
+    <link rel="stylesheet" href="/libs/source-code-pro/styles.css">
+
+    <link rel="stylesheet" href="/css/style.css">
+
+    <script src="/libs/jquery/2.1.3/jquery.min.js"></script>
+    
+    
+        <link rel="stylesheet" href="/libs/lightgallery/css/lightgallery.min.css">
+    
+    
+        <link rel="stylesheet" href="/libs/justified-gallery/justifiedGallery.min.css">
+    
+    
+    
+    
+
+
+</head>
+
+<body>
+    <div id="container">
+        <header id="header">
+    <div id="header-main" class="header-inner">
+        <div class="outer">
+            <!-- <a href="/" id="logo">
+                <i class="logo"></i>
+                <span class="site-title">Moruo&#39;s Blog</span>
+            </a> -->
+            <a href="/" id="logo">
+
+                <span class="site-title">呱呱呱</span>
+            </a>
+            <nav id="main-nav">
+                
+                    <a class="main-nav-link" href="/.">主页</a>
+                
+                    <a class="main-nav-link" href="/archives">归档</a>
+                
+                    <a class="main-nav-link" href="/about">关于</a>
+                
+            </nav>
+            
+                
+                <nav id="sub-nav">
+                    <div class="profile" id="profile-nav">
+                        <a id="profile-anchor" href="javascript:;">
+                            <img class="avatar" src="/css/images/avatar.jpg" />
+                            <i class="fa fa-caret-down"></i>
+                        </a>
+                    </div>
+                </nav>
+            
+            <div id="search-form-wrap">
+
+    <form class="search-form">
+        <input type="text" class="ins-search-input search-form-input" placeholder="搜索" />
+        <button type="submit" class="search-form-submit"></button>
+    </form>
+    <div class="ins-search">
+    <div class="ins-search-mask"></div>
+    <div class="ins-search-container">
+        <div class="ins-input-wrapper">
+            <input type="text" class="ins-search-input" placeholder="想要查找什么..." />
+            <span class="ins-close ins-selectable"><i class="fa fa-times-circle"></i></span>
+        </div>
+        <div class="ins-section-wrapper">
+            <div class="ins-section-container"></div>
+        </div>
+    </div>
+</div>
+<script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: '文章',
+            PAGES: '页面',
+            CATEGORIES: '分类',
+            TAGS: '标签',
+            UNTITLED: '(未命名)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+<script src="/js/insight.js"></script>
+
+</div>
+        </div>
+    </div>
+    <div id="main-nav-mobile" class="header-sub header-inner">
+        <table class="menu outer">
+            <tr>
+                
+                    <td><a class="main-nav-link" href="/.">Home</a></td>
+                
+                    <td><a class="main-nav-link" href="/archives">Archives</a></td>
+                
+                    <td><a class="main-nav-link" href="/about">About</a></td>
+                
+                <td>
+                    
+    <div class="search-form">
+        <input type="text" class="ins-search-input search-form-input" placeholder="搜索" />
+    </div>
+
+                </td>
+            </tr>
+        </table>
+    </div>
+</header>
+
+        <div class="outer">
+            
+                
+
+<aside id="profile">
+    <div class="inner profile-inner">
+        <div class="base-info profile-block">
+            <img id="avatar" src="/css/images/avatar.jpg" />
+            <h2 id="name">莫若</h2>
+            <h3 id="title">Years as songs</h3>
+            <span id="location"><i class="fa fa-map-marker"></i>ChengDu, China</span>
+            <a id="follow" target="_blank" href="https://github.com/MoruoFrog">关注我</a>
+        </div>
+        <div class="article-info profile-block">
+            <div class="article-info-block">
+                13
+                <span>文章</span>
+            </div>
+            <div class="article-info-block">
+                19
+                <span>标签</span>
+            </div>
+        </div>
+        
+        <div class="profile-block social-links">
+            <table>
+                <tr>
+                    
+                    
+                    <td>
+                        <a href="https://github.com/MoruoFrog" target="_blank" title="github" class=tooltip>
+                            <i class="fa fa-github"></i>
+                            
+                        </a>
+                    </td>
+                    
+                    <td>
+                        <a href="https://segmentfault.com/u/_58a665056a5e4" target="_blank" title="segmentfault" class=tooltip>
+                            <i class="fa fa-segmentfault"></i>
+                            
+                                sf
+                            
+                        </a>
+                    </td>
+                    
+                </tr>
+            </table>
+        </div>
+        
+    </div>
+</aside>
+
+            
+            <section id="main"><article id="post-大数据量场景下的Vue性能优化" class="article article-type-post" itemscope itemprop="blogPost">
+    <div class="article-inner">
+        
+        
+            <header class="article-header">
+                
+    
+        <h1 class="article-title" itemprop="name">
+            大数据量场景下的Vue性能优化
+        </h1>
+    
+
+                
+                    <div class="article-meta">
+                        
+    <div class="article-date">
+        <i class="fa fa-calendar"></i>
+        <a href="/2019/09/18/大数据量场景下的Vue性能优化/">
+            <time datetime="2019-09-18T12:10:00.000Z" itemprop="datePublished">2019-09-18</time>
+        </a>
+    </div>
+
+
+                        
+    <div class="article-category">
+    	<i class="fa fa-folder"></i>
+        <a class="article-category-link" href="/categories/article/">article</a>
+    </div>
+
+                        
+    <div class="article-tag">
+        <i class="fa fa-tag"></i>
+        <a class="tag-link" href="/tags/Vue/">Vue</a>, <a class="tag-link" href="/tags/性能优化/">性能优化</a>
+    </div>
+
+                    </div>
+                
+            </header>
+        
+        
+        <div class="article-entry" itemprop="articleBody">
+        
+            
+            <p>性能优化最常见的落脚点是在网络和dom上，但是在大数据量的场景下，由于Vue本身的特性，可能会造成js运行层面的性能问题，这篇文章讨论的就是针对这一部分的性能优化方案。</p>
+<p>最终的结果会将一个2s的耗时减少到10ms<br><a id="more"></a></p>
+<h2 id="模拟一个大数据量的场景"><a href="#模拟一个大数据量的场景" class="headerlink" title="模拟一个大数据量的场景"></a>模拟一个大数据量的场景</h2><figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br></pre></td><td class="code"><pre><span class="line">// App.vue</span><br><span class="line"><span class="tag">&lt;<span class="name">template</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">div</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">p</span>&gt;</span>It's &#123;&#123; firstUser.name &#125;&#125;'s show time<span class="tag">&lt;/<span class="name">p</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">div</span>&gt;</span>total: &#123;&#123; total &#125;&#125;<span class="tag">&lt;/<span class="name">div</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">div</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">template</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">script</span>&gt;</span><span class="undefined"></span></span><br><span class="line"><span class="javascript"><span class="keyword">const</span> user = []</span></span><br><span class="line"><span class="javascript"><span class="keyword">let</span> i = <span class="number">0</span></span></span><br><span class="line"><span class="javascript"><span class="keyword">while</span> (i++ <span class="xml"><span class="tag">&lt; <span class="attr">50000</span>) &#123;</span></span></span></span><br><span class="line"><span class="undefined">    user.push(&#123;</span></span><br><span class="line"><span class="undefined">        id: i,</span></span><br><span class="line"><span class="undefined">        age: 18,</span></span><br><span class="line"><span class="javascript">        name: <span class="string">`kunkun_<span class="subst">$&#123;i&#125;</span>`</span>,</span></span><br><span class="line"><span class="javascript">        alais: <span class="string">'Irving'</span>,</span></span><br><span class="line"><span class="javascript">        gender: <span class="string">'female'</span>,</span></span><br><span class="line"><span class="javascript">        education: <span class="string">'senior high school'</span>,</span></span><br><span class="line"><span class="javascript">        height: <span class="string">'xxx'</span>,</span></span><br><span class="line"><span class="javascript">        weight: <span class="string">'xxx'</span>,</span></span><br><span class="line"><span class="javascript">        hobby: <span class="string">'xxx'</span>,</span></span><br><span class="line"><span class="javascript">        tag: <span class="string">'xxx'</span>,</span></span><br><span class="line"><span class="undefined">        skill: &#123;</span></span><br><span class="line"><span class="undefined">            sing: 0,</span></span><br><span class="line"><span class="undefined">            dance: 0,</span></span><br><span class="line"><span class="undefined">            rap: 0,</span></span><br><span class="line"><span class="undefined">            basketball: 100,</span></span><br><span class="line"><span class="undefined">        &#125;,</span></span><br><span class="line"><span class="undefined">    &#125;)</span></span><br><span class="line"><span class="undefined">&#125;</span></span><br><span class="line"><span class="undefined"></span></span><br><span class="line"><span class="javascript"><span class="keyword">export</span> <span class="keyword">default</span> &#123;</span></span><br><span class="line"><span class="undefined">  data: &#123;</span></span><br><span class="line"><span class="undefined">    userList: user,</span></span><br><span class="line"><span class="undefined">  &#125;,</span></span><br><span class="line"><span class="undefined"></span></span><br><span class="line"><span class="undefined">  computed: &#123;</span></span><br><span class="line"><span class="undefined">    firstUser() &#123;</span></span><br><span class="line"><span class="javascript">      <span class="keyword">const</span> userList = <span class="keyword">this</span>.userList</span></span><br><span class="line"><span class="javascript">      <span class="keyword">return</span> userList.length ? userList[<span class="number">0</span>] : &#123;&#125;</span></span><br><span class="line"><span class="undefined">    &#125;,</span></span><br><span class="line"><span class="undefined"></span></span><br><span class="line"><span class="undefined">    total() &#123;</span></span><br><span class="line"><span class="javascript">      <span class="keyword">return</span> <span class="keyword">this</span>.userList.length</span></span><br><span class="line"><span class="undefined">    &#125;,</span></span><br><span class="line"><span class="undefined">  &#125;,</span></span><br><span class="line"><span class="undefined">&#125;</span></span><br></pre></td></tr></table></figure>
+<p>如以上代码所示，模拟了5万个用户，每一个用户拥有id, name, age等等字段。 <a href="https://jsfiddle.net/MoruoFrog/b81vzs5t/2/" target="_blank" rel="noopener">jsfiddle</a></p>
+<p>打开chrome devtool的Performance工具，可以看到，渲染这个组件的过程中，Observer这个阶段耗时2.19s（测试机器配置为桌面端i7，16g内存）。</p>
+<p><img src="http://ww1.sinaimg.cn/large/ac03dbb3gy1g72s3pdo07j20sw0dndgk.jpg" alt="未优化.png"></p>
+<p>接下来，我会一步一步的把这一段耗时减少到<strong>10ms</strong>。</p>
+<h2 id="分析原因"><a href="#分析原因" class="headerlink" title="分析原因"></a>分析原因</h2><p>众所周知，Vue在渲染组件的时候，会对data对象进行改造，遍历data的key，调用defineProperty方法定义它的setter和getter。如果某个字段是Object，或者Array，还会递归的对这个字段进行上诉操作。</p>
+<p>通常情况下，这个操作耗时是很短的，但是当数据量非常大的时候，对每一个数据项的每一个字段都进行defineProperty的操作就是一个昂贵的操作，所以性能优化的出发点就是减少defineProperty的次数。</p>
+<h2 id="Step-1-减少无用字段"><a href="#Step-1-减少无用字段" class="headerlink" title="Step 1 - 减少无用字段"></a>Step 1 - 减少无用字段</h2><p>在这个模拟的例子当中，其实我只需要2个字段，一个是name，一个是id（id甚至也可以不要），所以我把多余的字段都去掉，一共减少了8个String类型的字段，和一个Object类型的字段，可以减少 (8 + 4) * n次defineProperty操作和n次递归调用。看看结果如何。</p>
+<p><img src="http://ww1.sinaimg.cn/large/ac03dbb3gy1g72skhoo6qj20u00ebmxu.jpg" alt="去除无用字段.png"></p>
+<p>Observer这个操作从2.2s减少到了<strong>515ms</strong>，提升还是比较大的。</p>
+<h2 id="Step-2-数据扁平化"><a href="#Step-2-数据扁平化" class="headerlink" title="Step 2 - 数据扁平化"></a>Step 2 - 数据扁平化</h2><p>在当前版本（2.x）的Vue当中，对于数据变动的检测有许多限制，比如不能检测对象属性的添加和删除；不能检测到通过数据索引直接设置数据项等等。</p>
+<p>所以，<strong>当一个数组的数据项都是基本数据类型的时候，Vue不会进行任何操作</strong>。</p>
+<p>首先，把user数据拍扁</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> user = []</span><br><span class="line"><span class="keyword">let</span> i = <span class="number">0</span></span><br><span class="line"><span class="keyword">while</span> (i++ <span class="xml"><span class="tag">&lt; <span class="attr">50000</span>) &#123;</span></span></span><br><span class="line"><span class="xml">    user.push(`kun_$&#123;i&#125;`, i) // 通过index为基数还是偶数分辨是name还是id</span></span><br><span class="line"><span class="xml">&#125;</span></span><br></pre></td></tr></table></figure>
+<p>然后，相应的改变computed的计算方法，不影响渲染逻辑和业务逻辑</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">...</span><br><span class="line">computed: &#123;</span><br><span class="line">    firstUser() &#123;</span><br><span class="line">        <span class="keyword">const</span> userList = <span class="keyword">this</span>.userList</span><br><span class="line">        <span class="keyword">return</span> userList.length ? &#123; <span class="attr">name</span>: userList[<span class="number">0</span>], <span class="attr">id</span>: userList[<span class="number">1</span>] &#125; : &#123;&#125;</span><br><span class="line">    &#125;,</span><br><span class="line"></span><br><span class="line">    total() &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">this</span>.userList.length / <span class="number">2</span></span><br><span class="line">    &#125;,</span><br><span class="line">&#125;</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+<p><a href="https://jsfiddle.net/MoruoFrog/b81vzs5t/5/" target="_blank" rel="noopener">jsfiddle - 数据扁平化</a></p>
+<p>看看结果如何</p>
+<p><img src="http://ww1.sinaimg.cn/large/ac03dbb3gy1g72t8kbgfxj20pb0ec0t9.jpg" alt="扁平数据.png"></p>
+<p>从上图可以看出，结果非常的明显，从515ms直接减少到了<strong>7ms</strong>，几乎完全避免了性能损耗。</p>
+<h2 id="Step-3-利用computed"><a href="#Step-3-利用computed" class="headerlink" title="Step 3 - 利用computed"></a>Step 3 - 利用computed</h2><p>到此为止，性能上的问题已经解决了，但是扁平的数据会影响业务代码的开发效率和可读性，同时数据和它的index产生了<strong>深耦合</strong>，如果我们需要添加一个字段使用或者改变下顺序，很容易出问题。<br>不过，我们可以利用computed计算属性把已经被拍扁的数据重新组装起来。由于Vue的响应式数据改造只针对data选项和props选项，不包括computed，所以只会产生很少的函数运行耗时。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">export</span> <span class="keyword">default</span> &#123;</span><br><span class="line">    data() &#123;</span><br><span class="line">        <span class="keyword">return</span> &#123;</span><br><span class="line">            <span class="comment">// 扁平的数据存起来</span></span><br><span class="line">            originSserList: user,</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;,</span><br><span class="line"></span><br><span class="line">    computed: &#123;</span><br><span class="line">        firstUser() &#123;</span><br><span class="line">            <span class="keyword">const</span> userList = <span class="keyword">this</span>.userList</span><br><span class="line">            <span class="keyword">return</span> userList.length ? userList[<span class="number">0</span>] : &#123;&#125;</span><br><span class="line">        &#125;,</span><br><span class="line"></span><br><span class="line">        total() &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">this</span>.userList.length</span><br><span class="line">        &#125;,</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 重新'组装'便于使用的计算属性，不影响原本的渲染和业务逻辑</span></span><br><span class="line">        userList() &#123;</span><br><span class="line">            <span class="keyword">const</span> result = []</span><br><span class="line">            <span class="keyword">const</span> user = <span class="keyword">this</span>.originSserList</span><br><span class="line">            <span class="keyword">for</span>(<span class="keyword">let</span> i = <span class="number">0</span>; i &lt; user.length; i += <span class="number">2</span>) &#123;</span><br><span class="line">                <span class="keyword">const</span> name = user[i]</span><br><span class="line">                <span class="keyword">const</span> id = user[i + <span class="number">1</span>]</span><br><span class="line">                result.push(&#123; name, id &#125;)</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">return</span> result</span><br><span class="line">        &#125;,</span><br><span class="line">    &#125;,</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>看看这种情况下的Performance。</p>
+<p><img src="http://ww1.sinaimg.cn/large/ac03dbb3gy1g73tbr2izoj20xy0dyt9e.jpg" alt="computed+扁平.png"></p>
+<p>仅仅只是多出了10ms的函数运行时间。</p>
+<p>到这里，在无需改动任何的渲染逻辑和业务逻辑的情况下，将js的运行时间从2.2s减少到了10ms左右，提升了200倍。并且这些数据是在桌面端i7处理器下得到的，大大超越了绝大部分的用户的机器性能，更不用说移动端了，所以在实际的大数据量场景下，能取得更加明显的用户可感知的性能提升。</p>
+<p><a href="https://jsfiddle.net/MoruoFrog/b81vzs5t/7/" target="_blank" rel="noopener">jsfiddle - 数据扁平化 + computed</a></p>
+<h2 id="Step-4-数据静态化"><a href="#Step-4-数据静态化" class="headerlink" title="Step 4 - 数据静态化"></a>Step 4 - 数据静态化</h2><p>没想到吧，还有Step4？已经没有优化空间了呀。</p>
+<p>在这个模拟的场景里面，确实没有优化的空间了，不过，并不是所有的数据都可以很好的进行扁平化处理，这可能涉及到方方面面的原因与权衡。那么这种情况下，如何进行优化呢？</p>
+<p>通常在Vue组件当中，都是把数据放在data选项当中，Vue会对data选项中的数据进行响应式改造，我称之”<strong>动态数据</strong>“或者”<strong>响应式</strong>“数据，但是并不是所有的数据都会发生变化的，很多时候，特别是大数据量场景下的数据是不会或者很少发生变化的，这种情况下，就没有必要把它放到data选项中去，在beforeCreated当中进行数据初始化，也不会影响数据的使用。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">beforeCreated() &#123;</span><br><span class="line">    <span class="keyword">this</span>.userList = xxx <span class="comment">// 记得把data当中的userList删掉</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这种处理方式，我称之为数据静态化，这种数据，我称之为”<strong>静态数据</strong>“。</p>
+<p>但是，有一点需要特别的注意，静态数据并不在Vue的响应式系统当中，也就是说当你进行this.userList = newUserList时，视图不会重新渲染，对应的computed计算属性也不会重新计算。没有了Vue提供的响应式系统，如果数据变动的时候，我们需要手动的去计算对应的数据，可能还需要配合$forceUpdate这个api去重新渲染视图。此时，需要在性能和代码可读性与开发效率上进行取舍与权衡。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>由于Vue的响应式系统，大数据量场景下可能会造成js运行层面的性能问题，可以通过3个方法去解决</p>
+<ul>
+<li>减少无用字段</li>
+<li>数据扁平化</li>
+<li>数据静态化</li>
+</ul>
+<p>这3个方法相互并不冲突，可以根据实际情况选择其中的1种或多种方法进行组合。</p>
+
+        
+        </div>
+        <!--
+        <footer class="article-footer">
+            <div class="share-container">
+
+
+
+</div>
+
+    <a data-url="moruo.vip/2019/09/18/大数据量场景下的Vue性能优化/" data-id="ck8ldy0mu000trd8qza6scll1" class="article-share-link"><i class="fa fa-share"></i>分享到</a>
+<script>
+    (function ($) {
+        // Prevent duplicate binding
+        if (typeof(__SHARE_BUTTON_BINDED__) === 'undefined' || !__SHARE_BUTTON_BINDED__) {
+            __SHARE_BUTTON_BINDED__ = true;
+        } else {
+            return;
+        }
+        $('body').on('click', function() {
+            $('.article-share-box.on').removeClass('on');
+        }).on('click', '.article-share-link', function(e) {
+            e.stopPropagation();
+
+            var $this = $(this),
+                url = $this.attr('data-url'),
+                encodedUrl = encodeURIComponent(url),
+                id = 'article-share-box-' + $this.attr('data-id'),
+                offset = $this.offset(),
+                box;
+
+            if ($('#' + id).length) {
+                box = $('#' + id);
+
+                if (box.hasClass('on')){
+                    box.removeClass('on');
+                    return;
+                }
+            } else {
+                var html = [
+                    '<div id="' + id + '" class="article-share-box">',
+                        '<input class="article-share-input" value="' + url + '">',
+                        '<div class="article-share-links">',
+                            '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="fa fa-twitter article-share-twitter" target="_blank" title="Twitter"></a>',
+                            '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="fa fa-facebook article-share-facebook" target="_blank" title="Facebook"></a>',
+                            '<a href="http://pinterest.com/pin/create/button/?url=' + encodedUrl + '" class="fa fa-pinterest article-share-pinterest" target="_blank" title="Pinterest"></a>',
+                            '<a href="https://plus.google.com/share?url=' + encodedUrl + '" class="fa fa-google article-share-google" target="_blank" title="Google+"></a>',
+                        '</div>',
+                    '</div>'
+                ].join('');
+
+              box = $(html);
+
+              $('body').append(box);
+            }
+
+            $('.article-share-box.on').hide();
+
+            box.css({
+                top: offset.top + 25,
+                left: offset.left
+            }).addClass('on');
+
+        }).on('click', '.article-share-box', function (e) {
+            e.stopPropagation();
+        }).on('click', '.article-share-box-input', function () {
+            $(this).select();
+        }).on('click', '.article-share-box-link', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            window.open(this.href, 'article-share-box-window-' + Date.now(), 'width=500,height=450');
+        });
+    })(jQuery);
+</script>
+
+            
+    
+
+        </footer>
+        -->
+    </div>
+    
+        
+<nav id="article-nav">
+    
+        <a href="/2019/11/07/部署es6代码/" id="article-nav-newer" class="article-nav-link-wrap">
+            <strong class="article-nav-caption">上一篇</strong>
+            <div class="article-nav-title">
+                
+                    生产环境部署es6代码
+                
+            </div>
+        </a>
+    
+    
+        <a href="/2019/06/04/hookEvent of Vue/" id="article-nav-older" class="article-nav-link-wrap">
+            <strong class="article-nav-caption">下一篇</strong>
+            <div class="article-nav-title">hookEvent of Vue</div>
+        </a>
+    
+</nav>
+
+
+    
+</article>
+
+
+    
+    
+
+</section>
+            
+                
+<aside id="sidebar">
+   
+        
+    <div class="widget-wrap">
+        <h3 class="widget-title">最新文章</h3>
+        <div class="widget">
+            <ul id="recent-post" class="no-thumbnail">
+                
+                    <li>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/article/">article</a></p>
+                            <p class="item-title"><a href="/2020/01/01/2020年计划/" class="title">2020年度挑战计划</a></p>
+                            <p class="item-date"><time datetime="2020-01-01T02:29:00.000Z" itemprop="datePublished">2020-01-01</time></p>
+                        </div>
+                    </li>
+                
+                    <li>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/article/">article</a></p>
+                            <p class="item-title"><a href="/2019/11/07/部署es6代码/" class="title">生产环境部署es6代码</a></p>
+                            <p class="item-date"><time datetime="2019-11-07T15:28:00.000Z" itemprop="datePublished">2019-11-07</time></p>
+                        </div>
+                    </li>
+                
+                    <li>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/article/">article</a></p>
+                            <p class="item-title"><a href="/2019/09/18/大数据量场景下的Vue性能优化/" class="title">大数据量场景下的Vue性能优化</a></p>
+                            <p class="item-date"><time datetime="2019-09-18T12:10:00.000Z" itemprop="datePublished">2019-09-18</time></p>
+                        </div>
+                    </li>
+                
+                    <li>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/article/">article</a></p>
+                            <p class="item-title"><a href="/2019/06/04/hookEvent of Vue/" class="title">hookEvent of Vue</a></p>
+                            <p class="item-date"><time datetime="2019-06-04T14:22:20.000Z" itemprop="datePublished">2019-06-04</time></p>
+                        </div>
+                    </li>
+                
+                    <li>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/article/">article</a></p>
+                            <p class="item-title"><a href="/2019/02/13/localStorage操作指北/" class="title">localStorage操作指北</a></p>
+                            <p class="item-date"><time datetime="2019-02-13T13:29:00.000Z" itemprop="datePublished">2019-02-13</time></p>
+                        </div>
+                    </li>
+                
+            </ul>
+        </div>
+    </div>
+
+    
+        
+    <div class="widget-wrap">
+        <h3 class="widget-title">归档</h3>
+        <div class="widget">
+            <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/01/">一月 2020</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/11/">十一月 2019</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/09/">九月 2019</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/06/">六月 2019</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/02/">二月 2019</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/12/">十二月 2018</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/11/">十一月 2018</a><span class="archive-list-count">3</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/10/">十月 2018</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/09/">九月 2018</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/06/">六月 2018</a><span class="archive-list-count">1</span></li></ul>
+        </div>
+    </div>
+
+    
+        
+    <div class="widget-wrap">
+        <h3 class="widget-title">标签</h3>
+        <div class="widget">
+            <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/tags/Mutation-Observer/">Mutation Observer</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Vue/">Vue</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Vue渲染原理/">Vue渲染原理</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ajax/">ajax</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/algorithm/">algorithm</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/axios/">axios</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/chrome插件/">chrome插件</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/dialoag/">dialoag</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/javascript/">javascript</a><span class="tag-list-count">6</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/localStorage/">localStorage</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/npm/">npm</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/promise/">promise</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/react/">react</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/recursion/">recursion</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/virtual-dom/">virtual-dom</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/优化/">优化</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/年度挑战/">年度挑战</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/性能优化/">性能优化</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/生活/">生活</a><span class="tag-list-count">1</span></li></ul>
+        </div>
+    </div>
+
+    
+        
+    <div class="widget-wrap">
+        <h3 class="widget-title">标签云</h3>
+        <div class="widget tagcloud">
+            <a href="/tags/Mutation-Observer/" style="font-size: 10px;">Mutation Observer</a> <a href="/tags/Vue/" style="font-size: 16.67px;">Vue</a> <a href="/tags/Vue渲染原理/" style="font-size: 10px;">Vue渲染原理</a> <a href="/tags/ajax/" style="font-size: 10px;">ajax</a> <a href="/tags/algorithm/" style="font-size: 10px;">algorithm</a> <a href="/tags/axios/" style="font-size: 10px;">axios</a> <a href="/tags/chrome插件/" style="font-size: 10px;">chrome插件</a> <a href="/tags/dialoag/" style="font-size: 10px;">dialoag</a> <a href="/tags/javascript/" style="font-size: 20px;">javascript</a> <a href="/tags/localStorage/" style="font-size: 10px;">localStorage</a> <a href="/tags/npm/" style="font-size: 10px;">npm</a> <a href="/tags/promise/" style="font-size: 10px;">promise</a> <a href="/tags/react/" style="font-size: 10px;">react</a> <a href="/tags/recursion/" style="font-size: 10px;">recursion</a> <a href="/tags/virtual-dom/" style="font-size: 10px;">virtual-dom</a> <a href="/tags/优化/" style="font-size: 10px;">优化</a> <a href="/tags/年度挑战/" style="font-size: 10px;">年度挑战</a> <a href="/tags/性能优化/" style="font-size: 13.33px;">性能优化</a> <a href="/tags/生活/" style="font-size: 10px;">生活</a>
+        </div>
+    </div>
+
+    
+        
+    <div class="widget-wrap widget-list">
+        <h3 class="widget-title">链接</h3>
+        <div class="widget">
+            <ul>
+                
+                    <li>
+                        <a href="http://hexo.io">Hexo</a>
+                    </li>
+                
+            </ul>
+        </div>
+    </div>
+
+
+    
+    <div id="toTop" class="fa fa-angle-up"></div>
+</aside>
+
+            
+        </div>
+        <footer id="footer">
+    <div class="outer">
+        <div id="footer-info" class="inner">
+            &copy; 2020 Mor<br>
+            Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>. Theme by <a href="http://github.com/ppoffice">PPOffice</a>
+            <br>
+            <!--
+            <a href="https://www.upyun.com/?utm_source=lianmeng&utm_medium=referral" target="_blank">又拍云提供CDN及云存储服务</a>
+            <img src="css/images/youpai.png" style="width: 36px;position: relative;top: 12px;margin-left: 10px;">
+            -->
+        </div>
+    </div>
+</footer>
+        
+
+
+    
+        <script src="/libs/lightgallery/js/lightgallery.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-thumbnail.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-pager.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-autoplay.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-fullscreen.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-zoom.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-hash.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-share.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-video.min.js"></script>
+    
+    
+        <script src="/libs/justified-gallery/jquery.justifiedGallery.min.js"></script>
+    
+    
+
+
+
+<!-- Custom Scripts -->
+<script src="/js/main.js"></script>
+
+    </div>
+</body>
+</html>

@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang=zh>
+<head>
+    <meta charset="utf-8">
+    
+    <title>生产环境部署es6代码 | Moruo&#39;s Blog</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+    <meta name="description" content="时间流转，来到了9102年的末尾，距离es6正式发布已经过去了4年半。在前端发展的时间长河中，我们送别了YUI，ie（也许），jQuery，现在，是时候送别es5了。">
+<meta name="keywords" content="javascript,性能优化">
+<meta property="og:type" content="article">
+<meta property="og:title" content="生产环境部署es6代码">
+<meta property="og:url" content="moruo.vip/2019/11/07/部署es6代码/index.html">
+<meta property="og:site_name" content="Moruo&#39;s Blog">
+<meta property="og:description" content="时间流转，来到了9102年的末尾，距离es6正式发布已经过去了4年半。在前端发展的时间长河中，我们送别了YUI，ie（也许），jQuery，现在，是时候送别es5了。">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="http://ww1.sinaimg.cn/large/ac03dbb3gy1g8qpjqr8i3j216l06kjry.jpg">
+<meta property="og:updated_time" content="2020-01-06T07:54:49.485Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="生产环境部署es6代码">
+<meta name="twitter:description" content="时间流转，来到了9102年的末尾，距离es6正式发布已经过去了4年半。在前端发展的时间长河中，我们送别了YUI，ie（也许），jQuery，现在，是时候送别es5了。">
+<meta name="twitter:image" content="http://ww1.sinaimg.cn/large/ac03dbb3gy1g8qpjqr8i3j216l06kjry.jpg">
+    
+
+    
+
+    
+        <link rel="icon" href="/css/images/favicon.ico" />
+    
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-120548962-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+
+        gtag('config', 'UA-120548962-1');
+    </script>
+
+    <link rel="stylesheet" href="/libs/font-awesome/css/font-awesome.min.css">
+    <link rel="stylesheet" href="/libs/open-sans/styles.css">
+    <link rel="stylesheet" href="/libs/source-code-pro/styles.css">
+
+    <link rel="stylesheet" href="/css/style.css">
+
+    <script src="/libs/jquery/2.1.3/jquery.min.js"></script>
+    
+    
+        <link rel="stylesheet" href="/libs/lightgallery/css/lightgallery.min.css">
+    
+    
+        <link rel="stylesheet" href="/libs/justified-gallery/justifiedGallery.min.css">
+    
+    
+    
+    
+
+
+</head>
+
+<body>
+    <div id="container">
+        <header id="header">
+    <div id="header-main" class="header-inner">
+        <div class="outer">
+            <!-- <a href="/" id="logo">
+                <i class="logo"></i>
+                <span class="site-title">Moruo&#39;s Blog</span>
+            </a> -->
+            <a href="/" id="logo">
+
+                <span class="site-title">呱呱呱</span>
+            </a>
+            <nav id="main-nav">
+                
+                    <a class="main-nav-link" href="/.">主页</a>
+                
+                    <a class="main-nav-link" href="/archives">归档</a>
+                
+                    <a class="main-nav-link" href="/about">关于</a>
+                
+            </nav>
+            
+                
+                <nav id="sub-nav">
+                    <div class="profile" id="profile-nav">
+                        <a id="profile-anchor" href="javascript:;">
+                            <img class="avatar" src="/css/images/avatar.jpg" />
+                            <i class="fa fa-caret-down"></i>
+                        </a>
+                    </div>
+                </nav>
+            
+            <div id="search-form-wrap">
+
+    <form class="search-form">
+        <input type="text" class="ins-search-input search-form-input" placeholder="搜索" />
+        <button type="submit" class="search-form-submit"></button>
+    </form>
+    <div class="ins-search">
+    <div class="ins-search-mask"></div>
+    <div class="ins-search-container">
+        <div class="ins-input-wrapper">
+            <input type="text" class="ins-search-input" placeholder="想要查找什么..." />
+            <span class="ins-close ins-selectable"><i class="fa fa-times-circle"></i></span>
+        </div>
+        <div class="ins-section-wrapper">
+            <div class="ins-section-container"></div>
+        </div>
+    </div>
+</div>
+<script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: '文章',
+            PAGES: '页面',
+            CATEGORIES: '分类',
+            TAGS: '标签',
+            UNTITLED: '(未命名)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+<script src="/js/insight.js"></script>
+
+</div>
+        </div>
+    </div>
+    <div id="main-nav-mobile" class="header-sub header-inner">
+        <table class="menu outer">
+            <tr>
+                
+                    <td><a class="main-nav-link" href="/.">Home</a></td>
+                
+                    <td><a class="main-nav-link" href="/archives">Archives</a></td>
+                
+                    <td><a class="main-nav-link" href="/about">About</a></td>
+                
+                <td>
+                    
+    <div class="search-form">
+        <input type="text" class="ins-search-input search-form-input" placeholder="搜索" />
+    </div>
+
+                </td>
+            </tr>
+        </table>
+    </div>
+</header>
+
+        <div class="outer">
+            
+                
+
+<aside id="profile">
+    <div class="inner profile-inner">
+        <div class="base-info profile-block">
+            <img id="avatar" src="/css/images/avatar.jpg" />
+            <h2 id="name">莫若</h2>
+            <h3 id="title">Years as songs</h3>
+            <span id="location"><i class="fa fa-map-marker"></i>ChengDu, China</span>
+            <a id="follow" target="_blank" href="https://github.com/MoruoFrog">关注我</a>
+        </div>
+        <div class="article-info profile-block">
+            <div class="article-info-block">
+                13
+                <span>文章</span>
+            </div>
+            <div class="article-info-block">
+                19
+                <span>标签</span>
+            </div>
+        </div>
+        
+        <div class="profile-block social-links">
+            <table>
+                <tr>
+                    
+                    
+                    <td>
+                        <a href="https://github.com/MoruoFrog" target="_blank" title="github" class=tooltip>
+                            <i class="fa fa-github"></i>
+                            
+                        </a>
+                    </td>
+                    
+                    <td>
+                        <a href="https://segmentfault.com/u/_58a665056a5e4" target="_blank" title="segmentfault" class=tooltip>
+                            <i class="fa fa-segmentfault"></i>
+                            
+                                sf
+                            
+                        </a>
+                    </td>
+                    
+                </tr>
+            </table>
+        </div>
+        
+    </div>
+</aside>
+
+            
+            <section id="main"><article id="post-部署es6代码" class="article article-type-post" itemscope itemprop="blogPost">
+    <div class="article-inner">
+        
+        
+            <header class="article-header">
+                
+    
+        <h1 class="article-title" itemprop="name">
+            生产环境部署es6代码
+        </h1>
+    
+
+                
+                    <div class="article-meta">
+                        
+    <div class="article-date">
+        <i class="fa fa-calendar"></i>
+        <a href="/2019/11/07/部署es6代码/">
+            <time datetime="2019-11-07T15:28:00.000Z" itemprop="datePublished">2019-11-07</time>
+        </a>
+    </div>
+
+
+                        
+    <div class="article-category">
+    	<i class="fa fa-folder"></i>
+        <a class="article-category-link" href="/categories/article/">article</a>
+    </div>
+
+                        
+    <div class="article-tag">
+        <i class="fa fa-tag"></i>
+        <a class="tag-link" href="/tags/javascript/">javascript</a>, <a class="tag-link" href="/tags/性能优化/">性能优化</a>
+    </div>
+
+                    </div>
+                
+            </header>
+        
+        
+        <div class="article-entry" itemprop="articleBody">
+        
+            
+            <p>时间流转，来到了9102年的末尾，距离es6正式发布已经过去了4年半。在前端发展的时间长河中，我们送别了YUI，ie（也许），jQuery，现在，是时候送别es5了。</p>
+<a id="more"></a>
+<h2 id="收益在哪"><a href="#收益在哪" class="headerlink" title="收益在哪"></a>收益在哪</h2><p>程序员在进行技术决策的时候，通常的目的是为了<del>kpi</del>，<del>升值加薪</del>，<del>这个技术很流行</del>，不，当然是为了对业务产生价值。</p>
+<p>不难发现，直接部署es6代码可以带来的好处包括：</p>
+<ul>
+<li>代码体积减小</li>
+<li>性能提升</li>
+<li>缩短构建时间</li>
+</ul>
+<h3 id="代码体积减小"><a href="#代码体积减小" class="headerlink" title="代码体积减小"></a>代码体积减小</h3><p>首先，es6带来了新的语法和特性，这可以让代码更简洁，使得代码量减少。其次，babel转译之后，会产生一些helper，引入一些polyfill，而且有一些语法特性无法在运行时进行处理，必须在转译过程中修改源代码，这也会导致代码量增加。当然，部署es6代码也需要babel转译一部分更新的语法，并不是说完全不使用babel。</p>
+<p><a href="https://philipwalton.com/articles/deploying-es2015-code-in-production-today/" target="_blank" rel="noopener">一个Google工程师的试验结果</a>，es6代码的bundle size比es5代码减少了<strong>50%</strong>。而我自己的实践的结果没有这么夸张，是<strong>25%左右</strong>。</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">version</th>
+<th style="text-align:center">bundle size</th>
+<th style="text-align:center">Gzipped</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">es5</td>
+<td style="text-align:center">221kb</td>
+<td style="text-align:center">39kb</td>
+</tr>
+<tr>
+<td style="text-align:center">es6</td>
+<td style="text-align:center">170kb</td>
+<td style="text-align:center">29kb</td>
+</tr>
+</tbody>
+</table>
+<p>之所以我和他的测试结果差异较大，是因为最终的结果跟每个人的代码风格和代码内容有很大的关系。我用来进行测试的代码是一个线上项目的代码，我个人的代码风格是大量使用es6/7/8语法，不过项目本身大量是在写业务逻辑，并且项目使用了Vue，其实很多js代码是模板编译之后生成的渲染函数。</p>
+<p>所以，大概的结论是es6的代码会比es5的代码体积减少<strong>15% ~ 50%</strong>，具体能减少多少，取决于代码风格以及代码内容。代码风格越现代，代码中”生成的代码”越少，收益越高。</p>
+<h3 id="性能提升"><a href="#性能提升" class="headerlink" title="性能提升"></a>性能提升</h3><p>es6代码相对于es5代码，性能更高的原因我认为有2个</p>
+<ul>
+<li>代码量减少带来的解析时间减少，这个正比于代码体积的减少</li>
+<li>运行性能的提高</li>
+</ul>
+<p>对于第一点，浏览器解析代码时间的减少应该占比较小，通过chrome的Performance面板可以看到，解析一个200kb的js文件Compile Script耗时为10ms（测试机器为台式机，i7/16G）。</p>
+<p>对于第二点，运行时性能。在es6刚刚发布的时候，很多新特性的性能是比较低的，因为js引擎没有足够的时间去进行优化，相比较而言，es5以及更老的代码经过了浏览器的长时间优化，在es6刚出来的时候，很对人也对es6的性能有很大的担忧。</p>
+<p>Github上有一个<a href="http://incaseofstairs.com/six-speed/" target="_blank" rel="noopener">仓库</a>，专门对es6和es5进行了性能对比。</p>
+<p>从对比结果可以看出来，在chrome 72版本上，es6代码的性能优于babel转译成的es5代码，和手写的es5代码比起来各有千秋，基本算是55开。</p>
+<p>而且，<a href="*https://www.zhihu.com/question/305443734/answer/551169917">浏览器对于es6的性能优化是持续性的</a>，最近V8就会因为React hooks而改进数组解构的性能。</p>
+<p>针对运行时的es6代码和es5代码的性能对比，我也用一个线上项目进行了实验。实验方式如下</p>
+<ol>
+<li>利用performance API 在打包后的app.js文件开头记下时间戳，在js文件末尾减去开始的时间，得到一个时间，众所周知，打包之后的app.js是一个立即执行函数，所以这个时间包含了app.js文件中<strong>部分代码</strong>的运行时间</li>
+<li>利用chrome 的 Performance面板，可以直接得到一段js的执行时间Evaluate Script</li>
+</ol>
+<p><img src="http://ww1.sinaimg.cn/large/ac03dbb3gy1g8qpjqr8i3j216l06kjry.jpg" alt="evaluate-script.png"></p>
+<p>实验结果如下（20次的平均值）</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">version</th>
+<th style="text-align:center">记录的运行时间</th>
+<th style="text-align:center">Performance面板的Evaluate Script</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">es5</td>
+<td style="text-align:center">258.88ms</td>
+<td style="text-align:center">295.29ms</td>
+</tr>
+<tr>
+<td style="text-align:center">es6</td>
+<td style="text-align:center">206.28ms</td>
+<td style="text-align:center">241.59ms</td>
+</tr>
+</tbody>
+</table>
+<p>测试条件下，es6的代码取得了<strong>20%左右</strong>的运行性能提升</p>
+<h2 id="风险在哪儿"><a href="#风险在哪儿" class="headerlink" title="风险在哪儿"></a>风险在哪儿</h2><p>js的运行环境非常复杂，桌面端、移动端、各种小程序、各种webview、node.js，能否部署es6代码只能依靠自己判断。</p>
+<p>就我个人的经验而言，大部分的中后台项目都具备直接部署es6代码的条件，而且我们在具体的实施中肯定会有降级方案，让不支持es6的情况下运行es5的代码。</p>
+<h2 id="如何实施"><a href="#如何实施" class="headerlink" title="如何实施"></a>如何实施</h2><p>Vue用户可以通过Vue cli的 –modern直接开启<a href="https://cli.vuejs.org/zh/guide/browser-compatibility.html#%E7%8E%B0%E4%BB%A3%E6%A8%A1%E5%BC%8F" target="_blank" rel="noopener">现代模式</a></p>
+<p>非Vue使用者，可以通过<a href="https://philipwalton.com/articles/deploying-es2015-code-in-production-today/" target="_blank" rel="noopener">这篇文章</a>提到的方案来进行。大概就是利用script标签的module type作为浏览器是否全面支持es6的检测，并通过type=nomodule来进行降级处理。</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">// 不支持module的浏览器，下载但不会执行</span><br><span class="line"><span class="tag">&lt;<span class="name">script</span> <span class="attr">type</span>=<span class="string">"module"</span> <span class="attr">src</span>=<span class="string">"es6.js"</span>&gt;</span><span class="undefined"></span><span class="tag">&lt;/<span class="name">script</span>&gt;</span></span><br><span class="line"></span><br><span class="line">// 支持module的浏览器，不会下载</span><br><span class="line"><span class="tag">&lt;<span class="name">script</span> <span class="attr">nomodule</span> <span class="attr">src</span>=<span class="string">"es5.js"</span>&gt;</span><span class="undefined"></span><span class="tag">&lt;/<span class="name">script</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<p>一个需要注意的点是safari 10不支持nomodule，所以需要针对它解决重复下载并执行的问题。(ps: safari浏览器是新时代的毒瘤)</p>
+<p>虽然，一个降级的方案可以保证我们的代码可以在只支持es5的浏览器上也可以执行，但是同时这些老的浏览器会下载2份代码，带来的损失非常大，因为老设备通常也意味着低性能和低网速，它们更不能承受性能损失。所以我认为，如果你的业务需要兼容es5的用户达到了20%以上，我就不赞同采用这个方案。</p>
+<p>如果可以确定完全不需要兼容es5的用户，可以直接修改browserlist到全面支持es6的浏览器版本，并且不用考虑降级方案，此时还会带来构建速度提升这一额外的好处。</p>
+<p>browserslist示例</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">Chrome &gt;= 60</span><br><span class="line">Safari &gt;= 10.1</span><br><span class="line">iOS &gt;= 10.3</span><br><span class="line">Firefox &gt;= 54</span><br><span class="line">Edge &gt;= 15</span><br></pre></td></tr></table></figure>
+<h2 id="结语"><a href="#结语" class="headerlink" title="结语"></a>结语</h2><p>时间带走一切，es5也不例外。</p>
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><ul>
+<li><a href="https://philipwalton.com/articles/deploying-es2015-code-in-production-today/" target="_blank" rel="noopener">deploying-es2015-code-in-production-today</a></li>
+<li><a href="https://myst729.github.io/posts/2018/deploying-es6-in-production/" target="_blank" rel="noopener">https://myst729.github.io/posts/2018/deploying-es6-in-production/</a></li>
+</ul>
+
+        
+        </div>
+        <!--
+        <footer class="article-footer">
+            <div class="share-container">
+
+
+
+</div>
+
+    <a data-url="moruo.vip/2019/11/07/部署es6代码/" data-id="ck8ldy0mt000prd8q5iy6vp5i" class="article-share-link"><i class="fa fa-share"></i>分享到</a>
+<script>
+    (function ($) {
+        // Prevent duplicate binding
+        if (typeof(__SHARE_BUTTON_BINDED__) === 'undefined' || !__SHARE_BUTTON_BINDED__) {
+            __SHARE_BUTTON_BINDED__ = true;
+        } else {
+            return;
+        }
+        $('body').on('click', function() {
+            $('.article-share-box.on').removeClass('on');
+        }).on('click', '.article-share-link', function(e) {
+            e.stopPropagation();
+
+            var $this = $(this),
+                url = $this.attr('data-url'),
+                encodedUrl = encodeURIComponent(url),
+                id = 'article-share-box-' + $this.attr('data-id'),
+                offset = $this.offset(),
+                box;
+
+            if ($('#' + id).length) {
+                box = $('#' + id);
+
+                if (box.hasClass('on')){
+                    box.removeClass('on');
+                    return;
+                }
+            } else {
+                var html = [
+                    '<div id="' + id + '" class="article-share-box">',
+                        '<input class="article-share-input" value="' + url + '">',
+                        '<div class="article-share-links">',
+                            '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="fa fa-twitter article-share-twitter" target="_blank" title="Twitter"></a>',
+                            '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="fa fa-facebook article-share-facebook" target="_blank" title="Facebook"></a>',
+                            '<a href="http://pinterest.com/pin/create/button/?url=' + encodedUrl + '" class="fa fa-pinterest article-share-pinterest" target="_blank" title="Pinterest"></a>',
+                            '<a href="https://plus.google.com/share?url=' + encodedUrl + '" class="fa fa-google article-share-google" target="_blank" title="Google+"></a>',
+                        '</div>',
+                    '</div>'
+                ].join('');
+
+              box = $(html);
+
+              $('body').append(box);
+            }
+
+            $('.article-share-box.on').hide();
+
+            box.css({
+                top: offset.top + 25,
+                left: offset.left
+            }).addClass('on');
+
+        }).on('click', '.article-share-box', function (e) {
+            e.stopPropagation();
+        }).on('click', '.article-share-box-input', function () {
+            $(this).select();
+        }).on('click', '.article-share-box-link', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            window.open(this.href, 'article-share-box-window-' + Date.now(), 'width=500,height=450');
+        });
+    })(jQuery);
+</script>
+
+            
+    
+
+        </footer>
+        -->
+    </div>
+    
+        
+<nav id="article-nav">
+    
+        <a href="/2020/01/01/2020年计划/" id="article-nav-newer" class="article-nav-link-wrap">
+            <strong class="article-nav-caption">上一篇</strong>
+            <div class="article-nav-title">
+                
+                    2020年度挑战计划
+                
+            </div>
+        </a>
+    
+    
+        <a href="/2019/09/18/大数据量场景下的Vue性能优化/" id="article-nav-older" class="article-nav-link-wrap">
+            <strong class="article-nav-caption">下一篇</strong>
+            <div class="article-nav-title">大数据量场景下的Vue性能优化</div>
+        </a>
+    
+</nav>
+
+
+    
+</article>
+
+
+    
+    
+
+</section>
+            
+                
+<aside id="sidebar">
+   
+        
+    <div class="widget-wrap">
+        <h3 class="widget-title">最新文章</h3>
+        <div class="widget">
+            <ul id="recent-post" class="no-thumbnail">
+                
+                    <li>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/article/">article</a></p>
+                            <p class="item-title"><a href="/2020/01/01/2020年计划/" class="title">2020年度挑战计划</a></p>
+                            <p class="item-date"><time datetime="2020-01-01T02:29:00.000Z" itemprop="datePublished">2020-01-01</time></p>
+                        </div>
+                    </li>
+                
+                    <li>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/article/">article</a></p>
+                            <p class="item-title"><a href="/2019/11/07/部署es6代码/" class="title">生产环境部署es6代码</a></p>
+                            <p class="item-date"><time datetime="2019-11-07T15:28:00.000Z" itemprop="datePublished">2019-11-07</time></p>
+                        </div>
+                    </li>
+                
+                    <li>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/article/">article</a></p>
+                            <p class="item-title"><a href="/2019/09/18/大数据量场景下的Vue性能优化/" class="title">大数据量场景下的Vue性能优化</a></p>
+                            <p class="item-date"><time datetime="2019-09-18T12:10:00.000Z" itemprop="datePublished">2019-09-18</time></p>
+                        </div>
+                    </li>
+                
+                    <li>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/article/">article</a></p>
+                            <p class="item-title"><a href="/2019/06/04/hookEvent of Vue/" class="title">hookEvent of Vue</a></p>
+                            <p class="item-date"><time datetime="2019-06-04T14:22:20.000Z" itemprop="datePublished">2019-06-04</time></p>
+                        </div>
+                    </li>
+                
+                    <li>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/article/">article</a></p>
+                            <p class="item-title"><a href="/2019/02/13/localStorage操作指北/" class="title">localStorage操作指北</a></p>
+                            <p class="item-date"><time datetime="2019-02-13T13:29:00.000Z" itemprop="datePublished">2019-02-13</time></p>
+                        </div>
+                    </li>
+                
+            </ul>
+        </div>
+    </div>
+
+    
+        
+    <div class="widget-wrap">
+        <h3 class="widget-title">归档</h3>
+        <div class="widget">
+            <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/01/">一月 2020</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/11/">十一月 2019</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/09/">九月 2019</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/06/">六月 2019</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/02/">二月 2019</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/12/">十二月 2018</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/11/">十一月 2018</a><span class="archive-list-count">3</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/10/">十月 2018</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/09/">九月 2018</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/06/">六月 2018</a><span class="archive-list-count">1</span></li></ul>
+        </div>
+    </div>
+
+    
+        
+    <div class="widget-wrap">
+        <h3 class="widget-title">标签</h3>
+        <div class="widget">
+            <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/tags/Mutation-Observer/">Mutation Observer</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Vue/">Vue</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Vue渲染原理/">Vue渲染原理</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ajax/">ajax</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/algorithm/">algorithm</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/axios/">axios</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/chrome插件/">chrome插件</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/dialoag/">dialoag</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/javascript/">javascript</a><span class="tag-list-count">6</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/localStorage/">localStorage</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/npm/">npm</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/promise/">promise</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/react/">react</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/recursion/">recursion</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/virtual-dom/">virtual-dom</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/优化/">优化</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/年度挑战/">年度挑战</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/性能优化/">性能优化</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/生活/">生活</a><span class="tag-list-count">1</span></li></ul>
+        </div>
+    </div>
+
+    
+        
+    <div class="widget-wrap">
+        <h3 class="widget-title">标签云</h3>
+        <div class="widget tagcloud">
+            <a href="/tags/Mutation-Observer/" style="font-size: 10px;">Mutation Observer</a> <a href="/tags/Vue/" style="font-size: 16.67px;">Vue</a> <a href="/tags/Vue渲染原理/" style="font-size: 10px;">Vue渲染原理</a> <a href="/tags/ajax/" style="font-size: 10px;">ajax</a> <a href="/tags/algorithm/" style="font-size: 10px;">algorithm</a> <a href="/tags/axios/" style="font-size: 10px;">axios</a> <a href="/tags/chrome插件/" style="font-size: 10px;">chrome插件</a> <a href="/tags/dialoag/" style="font-size: 10px;">dialoag</a> <a href="/tags/javascript/" style="font-size: 20px;">javascript</a> <a href="/tags/localStorage/" style="font-size: 10px;">localStorage</a> <a href="/tags/npm/" style="font-size: 10px;">npm</a> <a href="/tags/promise/" style="font-size: 10px;">promise</a> <a href="/tags/react/" style="font-size: 10px;">react</a> <a href="/tags/recursion/" style="font-size: 10px;">recursion</a> <a href="/tags/virtual-dom/" style="font-size: 10px;">virtual-dom</a> <a href="/tags/优化/" style="font-size: 10px;">优化</a> <a href="/tags/年度挑战/" style="font-size: 10px;">年度挑战</a> <a href="/tags/性能优化/" style="font-size: 13.33px;">性能优化</a> <a href="/tags/生活/" style="font-size: 10px;">生活</a>
+        </div>
+    </div>
+
+    
+        
+    <div class="widget-wrap widget-list">
+        <h3 class="widget-title">链接</h3>
+        <div class="widget">
+            <ul>
+                
+                    <li>
+                        <a href="http://hexo.io">Hexo</a>
+                    </li>
+                
+            </ul>
+        </div>
+    </div>
+
+
+    
+    <div id="toTop" class="fa fa-angle-up"></div>
+</aside>
+
+            
+        </div>
+        <footer id="footer">
+    <div class="outer">
+        <div id="footer-info" class="inner">
+            &copy; 2020 Mor<br>
+            Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>. Theme by <a href="http://github.com/ppoffice">PPOffice</a>
+            <br>
+            <!--
+            <a href="https://www.upyun.com/?utm_source=lianmeng&utm_medium=referral" target="_blank">又拍云提供CDN及云存储服务</a>
+            <img src="css/images/youpai.png" style="width: 36px;position: relative;top: 12px;margin-left: 10px;">
+            -->
+        </div>
+    </div>
+</footer>
+        
+
+
+    
+        <script src="/libs/lightgallery/js/lightgallery.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-thumbnail.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-pager.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-autoplay.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-fullscreen.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-zoom.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-hash.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-share.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-video.min.js"></script>
+    
+    
+        <script src="/libs/justified-gallery/jquery.justifiedGallery.min.js"></script>
+    
+    
+
+
+
+<!-- Custom Scripts -->
+<script src="/js/main.js"></script>
+
+    </div>
+</body>
+</html>

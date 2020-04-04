@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang=zh>
+<head>
+    <meta charset="utf-8">
+    
+    <title>hookEvent of Vue | Moruo&#39;s Blog</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+    <meta name="description" content="在Vue当中，hooks可以作为一种event，在Vue的源码当中，称之为hookEvent。利用它，可以通过模板声明式的注入生命周期钩子函数，也可以给第三方组件添加生命周期处理函数。 1&amp;lt;Table @hook:updated=&quot;handleTableUpdated&quot;&amp;gt;&amp;lt;/Table&amp;gt;">
+<meta name="keywords" content="Vue">
+<meta property="og:type" content="article">
+<meta property="og:title" content="hookEvent of Vue">
+<meta property="og:url" content="moruo.vip/2019/06/04/hookEvent of Vue/index.html">
+<meta property="og:site_name" content="Moruo&#39;s Blog">
+<meta property="og:description" content="在Vue当中，hooks可以作为一种event，在Vue的源码当中，称之为hookEvent。利用它，可以通过模板声明式的注入生命周期钩子函数，也可以给第三方组件添加生命周期处理函数。 1&amp;lt;Table @hook:updated=&quot;handleTableUpdated&quot;&amp;gt;&amp;lt;/Table&amp;gt;">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2020-01-06T07:54:49.483Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="hookEvent of Vue">
+<meta name="twitter:description" content="在Vue当中，hooks可以作为一种event，在Vue的源码当中，称之为hookEvent。利用它，可以通过模板声明式的注入生命周期钩子函数，也可以给第三方组件添加生命周期处理函数。 1&amp;lt;Table @hook:updated=&quot;handleTableUpdated&quot;&amp;gt;&amp;lt;/Table&amp;gt;">
+    
+
+    
+
+    
+        <link rel="icon" href="/css/images/favicon.ico" />
+    
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-120548962-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+
+        gtag('config', 'UA-120548962-1');
+    </script>
+
+    <link rel="stylesheet" href="/libs/font-awesome/css/font-awesome.min.css">
+    <link rel="stylesheet" href="/libs/open-sans/styles.css">
+    <link rel="stylesheet" href="/libs/source-code-pro/styles.css">
+
+    <link rel="stylesheet" href="/css/style.css">
+
+    <script src="/libs/jquery/2.1.3/jquery.min.js"></script>
+    
+    
+        <link rel="stylesheet" href="/libs/lightgallery/css/lightgallery.min.css">
+    
+    
+        <link rel="stylesheet" href="/libs/justified-gallery/justifiedGallery.min.css">
+    
+    
+    
+    
+
+
+</head>
+
+<body>
+    <div id="container">
+        <header id="header">
+    <div id="header-main" class="header-inner">
+        <div class="outer">
+            <!-- <a href="/" id="logo">
+                <i class="logo"></i>
+                <span class="site-title">Moruo&#39;s Blog</span>
+            </a> -->
+            <a href="/" id="logo">
+
+                <span class="site-title">呱呱呱</span>
+            </a>
+            <nav id="main-nav">
+                
+                    <a class="main-nav-link" href="/.">主页</a>
+                
+                    <a class="main-nav-link" href="/archives">归档</a>
+                
+                    <a class="main-nav-link" href="/about">关于</a>
+                
+            </nav>
+            
+                
+                <nav id="sub-nav">
+                    <div class="profile" id="profile-nav">
+                        <a id="profile-anchor" href="javascript:;">
+                            <img class="avatar" src="/css/images/avatar.jpg" />
+                            <i class="fa fa-caret-down"></i>
+                        </a>
+                    </div>
+                </nav>
+            
+            <div id="search-form-wrap">
+
+    <form class="search-form">
+        <input type="text" class="ins-search-input search-form-input" placeholder="搜索" />
+        <button type="submit" class="search-form-submit"></button>
+    </form>
+    <div class="ins-search">
+    <div class="ins-search-mask"></div>
+    <div class="ins-search-container">
+        <div class="ins-input-wrapper">
+            <input type="text" class="ins-search-input" placeholder="想要查找什么..." />
+            <span class="ins-close ins-selectable"><i class="fa fa-times-circle"></i></span>
+        </div>
+        <div class="ins-section-wrapper">
+            <div class="ins-section-container"></div>
+        </div>
+    </div>
+</div>
+<script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: '文章',
+            PAGES: '页面',
+            CATEGORIES: '分类',
+            TAGS: '标签',
+            UNTITLED: '(未命名)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+<script src="/js/insight.js"></script>
+
+</div>
+        </div>
+    </div>
+    <div id="main-nav-mobile" class="header-sub header-inner">
+        <table class="menu outer">
+            <tr>
+                
+                    <td><a class="main-nav-link" href="/.">Home</a></td>
+                
+                    <td><a class="main-nav-link" href="/archives">Archives</a></td>
+                
+                    <td><a class="main-nav-link" href="/about">About</a></td>
+                
+                <td>
+                    
+    <div class="search-form">
+        <input type="text" class="ins-search-input search-form-input" placeholder="搜索" />
+    </div>
+
+                </td>
+            </tr>
+        </table>
+    </div>
+</header>
+
+        <div class="outer">
+            
+                
+
+<aside id="profile">
+    <div class="inner profile-inner">
+        <div class="base-info profile-block">
+            <img id="avatar" src="/css/images/avatar.jpg" />
+            <h2 id="name">莫若</h2>
+            <h3 id="title">Years as songs</h3>
+            <span id="location"><i class="fa fa-map-marker"></i>ChengDu, China</span>
+            <a id="follow" target="_blank" href="https://github.com/MoruoFrog">关注我</a>
+        </div>
+        <div class="article-info profile-block">
+            <div class="article-info-block">
+                13
+                <span>文章</span>
+            </div>
+            <div class="article-info-block">
+                19
+                <span>标签</span>
+            </div>
+        </div>
+        
+        <div class="profile-block social-links">
+            <table>
+                <tr>
+                    
+                    
+                    <td>
+                        <a href="https://github.com/MoruoFrog" target="_blank" title="github" class=tooltip>
+                            <i class="fa fa-github"></i>
+                            
+                        </a>
+                    </td>
+                    
+                    <td>
+                        <a href="https://segmentfault.com/u/_58a665056a5e4" target="_blank" title="segmentfault" class=tooltip>
+                            <i class="fa fa-segmentfault"></i>
+                            
+                                sf
+                            
+                        </a>
+                    </td>
+                    
+                </tr>
+            </table>
+        </div>
+        
+    </div>
+</aside>
+
+            
+            <section id="main"><article id="post-hookEvent of Vue" class="article article-type-post" itemscope itemprop="blogPost">
+    <div class="article-inner">
+        
+        
+            <header class="article-header">
+                
+    
+        <h1 class="article-title" itemprop="name">
+            hookEvent of Vue
+        </h1>
+    
+
+                
+                    <div class="article-meta">
+                        
+    <div class="article-date">
+        <i class="fa fa-calendar"></i>
+        <a href="/2019/06/04/hookEvent of Vue/">
+            <time datetime="2019-06-04T14:22:20.000Z" itemprop="datePublished">2019-06-04</time>
+        </a>
+    </div>
+
+
+                        
+    <div class="article-category">
+    	<i class="fa fa-folder"></i>
+        <a class="article-category-link" href="/categories/article/">article</a>
+    </div>
+
+                        
+    <div class="article-tag">
+        <i class="fa fa-tag"></i>
+        <a class="tag-link" href="/tags/Vue/">Vue</a>
+    </div>
+
+                    </div>
+                
+            </header>
+        
+        
+        <div class="article-entry" itemprop="articleBody">
+        
+            
+            <p>在Vue当中，hooks可以作为一种event，在Vue的源码当中，称之为hookEvent。<br>利用它，可以通过模板声明式的注入生命周期钩子函数，也可以给第三方组件添加生命周期处理函数。</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">Table</span> @<span class="attr">hook:updated</span>=<span class="string">"handleTableUpdated"</span>&gt;</span><span class="tag">&lt;/<span class="name">Table</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<a id="more"></a>
+<h2 id="从一个场景出发"><a href="#从一个场景出发" class="headerlink" title="从一个场景出发"></a>从一个场景出发</h2><p>有一个来自第三方的复杂表格组件，表格进行数据更新的时候渲染时间需要1s，由于渲染时间较长，为了更好的用户体验，我希望在表格进行更新时显示一个loading动画。</p>
+<p>有一个粗暴的办法是直接修改这个组件的源码，利用beforeUpdate和updated来显示loading，但是这种办法非常不好</p>
+<ul>
+<li>这是一个第三方的组件，作者发布组件的时候很可能对代码进行了压缩与构建，使得代码可读性很低，直接修改打包后的代码难度较高</li>
+<li>如果有源码的话，可以fork一份自己修改，不过作者不一定会发布源码</li>
+<li>无法享受开源社区对这个组件的升级与维护，你需要自己手动维护</li>
+</ul>
+<p>总之，修改源码这个方案可行，但是不好，不优雅。<br>那么，有没有办法，可以声明式的在模板上直接给一个组件注入一个生命周期函数呢？其实是可以的，就是通过hookEvent。</p>
+<h2 id="生命周期函数是如何工作的"><a href="#生命周期函数是如何工作的" class="headerlink" title="生命周期函数是如何工作的"></a>生命周期函数是如何工作的</h2><p>所谓生命周期函数，就是在某一个特定的时间点调用的函数，所以我们需要关注两件事：1、注册，2、调用。</p>
+<p>我们首先从调用开始。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">vm._self = vm</span><br><span class="line">initLifecycle(vm)</span><br><span class="line">initEvents(vm)</span><br><span class="line">initRender(vm)</span><br><span class="line">callHook(vm, <span class="string">'beforeCreate'</span>)</span><br><span class="line">initInjections(vm) <span class="comment">// resolve injections before data/props</span></span><br><span class="line">initState(vm)</span><br><span class="line">initProvide(vm) <span class="comment">// resolve provide after data/props</span></span><br><span class="line">callHook(vm, <span class="string">'created'</span>)</span><br></pre></td></tr></table></figure>
+<p>上面是一段Vue的源码，可以看出，生命周期函数是通过callHook这个函数去调用的，自然而然，我们去看看callHook函数的代码</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">export</span> <span class="function"><span class="keyword">function</span> <span class="title">callHook</span> (<span class="params">vm: Component, hook: string</span>) </span>&#123;</span><br><span class="line">  <span class="comment">// #7573 disable dep collection when invoking lifecycle hooks</span></span><br><span class="line">  pushTarget()</span><br><span class="line">  <span class="keyword">const</span> handlers = vm.$options[hook] <span class="comment">// 选项当中的生命周期函数</span></span><br><span class="line">  <span class="keyword">const</span> info = <span class="string">`<span class="subst">$&#123;hook&#125;</span> hook`</span></span><br><span class="line">  <span class="keyword">if</span> (handlers) &#123;</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">let</span> i = <span class="number">0</span>, j = handlers.length; i &lt; j; i++) &#123;</span><br><span class="line">      invokeWithErrorHandling(handlers[i], vm, <span class="literal">null</span>, vm, info)</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">if</span> (vm._hasHookEvent) &#123;</span><br><span class="line">    vm.$emit(<span class="string">'hook:'</span> + hook)</span><br><span class="line">  &#125;</span><br><span class="line">  popTarget()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>所以，callHook(‘created’)在vm._hasHookEvent为true的情况下，会执行$emit(‘hooks:created’)，也就是说，一个有着 hook: 特殊前缀的事件，会在对应的生命周期当中执行。其实到这里，我们已经可以大胆推断了：只要使用类似@hooks:created这个形式，就可以从Vue的模板中声明式的注入一个生命周期函数，测试一下，it works.</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">Table</span> @<span class="attr">hook:updated</span>=<span class="string">"handleTableUpdated"</span>&gt;</span><span class="tag">&lt;/<span class="name">Table</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<h3 id="hasHookEvent"><a href="#hasHookEvent" class="headerlink" title="hasHookEvent"></a>hasHookEvent</h3><p>之前的大胆推断，忽略了一个条件，那就是_hasHookEvent必需为true，接下来就去看看这个_hasHookEvent</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> hookRE = <span class="regexp">/^hook:/</span> <span class="comment">// 以hook:开头</span></span><br><span class="line">Vue.prototype.$on = <span class="function"><span class="keyword">function</span> (<span class="params">event: string | Array&lt;string&gt;, fn: Function</span>): <span class="title">Component</span> </span>&#123;</span><br><span class="line">  <span class="keyword">const</span> vm: Component = <span class="keyword">this</span></span><br><span class="line">  <span class="keyword">if</span> (<span class="built_in">Array</span>.isArray(event)) &#123;</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">let</span> i = <span class="number">0</span>, l = event.length; i &lt; l; i++) &#123;</span><br><span class="line">      vm.$on(event[i], fn)</span><br><span class="line">    &#125;</span><br><span class="line">  &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">    (vm._events[event] || (vm._events[event] = [])).push(fn)</span><br><span class="line">    <span class="comment">// optimize hook:event cost by using a boolean flag marked at registration</span></span><br><span class="line">    <span class="comment">// instead of a hash lookup</span></span><br><span class="line">    <span class="keyword">if</span> (hookRE.test(event)) &#123;</span><br><span class="line">      vm._hasHookEvent = <span class="literal">true</span></span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> vm</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>当使用了$on方法监听事件时，如果事件名以 hooks: 作为前缀，那么这个事件会被当做hookEvent，注册事件回调的同时，vm._hasHookEvent会被置为true，当使用callHook调用生命周期函数时，由于_hasHookEvent为true，所以会$emit(‘hooks:xxx’)，注册的生命周期函数就会执行。</p>
+<p>所以，如果你想给一个Vue组件添加生命周期函数有3个办法：</p>
+<ul>
+<li>在Vue选项中添加</li>
+<li>在模板中通过@hooks:created这种形式</li>
+<li>vm.$on(‘hooks:created’, cb)或者vm.$once(‘hooks:created’, cb)</li>
+</ul>
+
+        
+        </div>
+        <!--
+        <footer class="article-footer">
+            <div class="share-container">
+
+
+
+</div>
+
+    <a data-url="moruo.vip/2019/06/04/hookEvent of Vue/" data-id="ck8ldy0mh0005rd8qsz5kb3kd" class="article-share-link"><i class="fa fa-share"></i>分享到</a>
+<script>
+    (function ($) {
+        // Prevent duplicate binding
+        if (typeof(__SHARE_BUTTON_BINDED__) === 'undefined' || !__SHARE_BUTTON_BINDED__) {
+            __SHARE_BUTTON_BINDED__ = true;
+        } else {
+            return;
+        }
+        $('body').on('click', function() {
+            $('.article-share-box.on').removeClass('on');
+        }).on('click', '.article-share-link', function(e) {
+            e.stopPropagation();
+
+            var $this = $(this),
+                url = $this.attr('data-url'),
+                encodedUrl = encodeURIComponent(url),
+                id = 'article-share-box-' + $this.attr('data-id'),
+                offset = $this.offset(),
+                box;
+
+            if ($('#' + id).length) {
+                box = $('#' + id);
+
+                if (box.hasClass('on')){
+                    box.removeClass('on');
+                    return;
+                }
+            } else {
+                var html = [
+                    '<div id="' + id + '" class="article-share-box">',
+                        '<input class="article-share-input" value="' + url + '">',
+                        '<div class="article-share-links">',
+                            '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="fa fa-twitter article-share-twitter" target="_blank" title="Twitter"></a>',
+                            '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="fa fa-facebook article-share-facebook" target="_blank" title="Facebook"></a>',
+                            '<a href="http://pinterest.com/pin/create/button/?url=' + encodedUrl + '" class="fa fa-pinterest article-share-pinterest" target="_blank" title="Pinterest"></a>',
+                            '<a href="https://plus.google.com/share?url=' + encodedUrl + '" class="fa fa-google article-share-google" target="_blank" title="Google+"></a>',
+                        '</div>',
+                    '</div>'
+                ].join('');
+
+              box = $(html);
+
+              $('body').append(box);
+            }
+
+            $('.article-share-box.on').hide();
+
+            box.css({
+                top: offset.top + 25,
+                left: offset.left
+            }).addClass('on');
+
+        }).on('click', '.article-share-box', function (e) {
+            e.stopPropagation();
+        }).on('click', '.article-share-box-input', function () {
+            $(this).select();
+        }).on('click', '.article-share-box-link', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            window.open(this.href, 'article-share-box-window-' + Date.now(), 'width=500,height=450');
+        });
+    })(jQuery);
+</script>
+
+            
+    
+
+        </footer>
+        -->
+    </div>
+    
+        
+<nav id="article-nav">
+    
+        <a href="/2019/09/18/大数据量场景下的Vue性能优化/" id="article-nav-newer" class="article-nav-link-wrap">
+            <strong class="article-nav-caption">上一篇</strong>
+            <div class="article-nav-title">
+                
+                    大数据量场景下的Vue性能优化
+                
+            </div>
+        </a>
+    
+    
+        <a href="/2019/02/13/localStorage操作指北/" id="article-nav-older" class="article-nav-link-wrap">
+            <strong class="article-nav-caption">下一篇</strong>
+            <div class="article-nav-title">localStorage操作指北</div>
+        </a>
+    
+</nav>
+
+
+    
+</article>
+
+
+    
+    
+
+</section>
+            
+                
+<aside id="sidebar">
+   
+        
+    <div class="widget-wrap">
+        <h3 class="widget-title">最新文章</h3>
+        <div class="widget">
+            <ul id="recent-post" class="no-thumbnail">
+                
+                    <li>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/article/">article</a></p>
+                            <p class="item-title"><a href="/2020/01/01/2020年计划/" class="title">2020年度挑战计划</a></p>
+                            <p class="item-date"><time datetime="2020-01-01T02:29:00.000Z" itemprop="datePublished">2020-01-01</time></p>
+                        </div>
+                    </li>
+                
+                    <li>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/article/">article</a></p>
+                            <p class="item-title"><a href="/2019/11/07/部署es6代码/" class="title">生产环境部署es6代码</a></p>
+                            <p class="item-date"><time datetime="2019-11-07T15:28:00.000Z" itemprop="datePublished">2019-11-07</time></p>
+                        </div>
+                    </li>
+                
+                    <li>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/article/">article</a></p>
+                            <p class="item-title"><a href="/2019/09/18/大数据量场景下的Vue性能优化/" class="title">大数据量场景下的Vue性能优化</a></p>
+                            <p class="item-date"><time datetime="2019-09-18T12:10:00.000Z" itemprop="datePublished">2019-09-18</time></p>
+                        </div>
+                    </li>
+                
+                    <li>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/article/">article</a></p>
+                            <p class="item-title"><a href="/2019/06/04/hookEvent of Vue/" class="title">hookEvent of Vue</a></p>
+                            <p class="item-date"><time datetime="2019-06-04T14:22:20.000Z" itemprop="datePublished">2019-06-04</time></p>
+                        </div>
+                    </li>
+                
+                    <li>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/article/">article</a></p>
+                            <p class="item-title"><a href="/2019/02/13/localStorage操作指北/" class="title">localStorage操作指北</a></p>
+                            <p class="item-date"><time datetime="2019-02-13T13:29:00.000Z" itemprop="datePublished">2019-02-13</time></p>
+                        </div>
+                    </li>
+                
+            </ul>
+        </div>
+    </div>
+
+    
+        
+    <div class="widget-wrap">
+        <h3 class="widget-title">归档</h3>
+        <div class="widget">
+            <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/01/">一月 2020</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/11/">十一月 2019</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/09/">九月 2019</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/06/">六月 2019</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/02/">二月 2019</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/12/">十二月 2018</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/11/">十一月 2018</a><span class="archive-list-count">3</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/10/">十月 2018</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/09/">九月 2018</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/06/">六月 2018</a><span class="archive-list-count">1</span></li></ul>
+        </div>
+    </div>
+
+    
+        
+    <div class="widget-wrap">
+        <h3 class="widget-title">标签</h3>
+        <div class="widget">
+            <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/tags/Mutation-Observer/">Mutation Observer</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Vue/">Vue</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Vue渲染原理/">Vue渲染原理</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ajax/">ajax</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/algorithm/">algorithm</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/axios/">axios</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/chrome插件/">chrome插件</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/dialoag/">dialoag</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/javascript/">javascript</a><span class="tag-list-count">6</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/localStorage/">localStorage</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/npm/">npm</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/promise/">promise</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/react/">react</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/recursion/">recursion</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/virtual-dom/">virtual-dom</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/优化/">优化</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/年度挑战/">年度挑战</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/性能优化/">性能优化</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/生活/">生活</a><span class="tag-list-count">1</span></li></ul>
+        </div>
+    </div>
+
+    
+        
+    <div class="widget-wrap">
+        <h3 class="widget-title">标签云</h3>
+        <div class="widget tagcloud">
+            <a href="/tags/Mutation-Observer/" style="font-size: 10px;">Mutation Observer</a> <a href="/tags/Vue/" style="font-size: 16.67px;">Vue</a> <a href="/tags/Vue渲染原理/" style="font-size: 10px;">Vue渲染原理</a> <a href="/tags/ajax/" style="font-size: 10px;">ajax</a> <a href="/tags/algorithm/" style="font-size: 10px;">algorithm</a> <a href="/tags/axios/" style="font-size: 10px;">axios</a> <a href="/tags/chrome插件/" style="font-size: 10px;">chrome插件</a> <a href="/tags/dialoag/" style="font-size: 10px;">dialoag</a> <a href="/tags/javascript/" style="font-size: 20px;">javascript</a> <a href="/tags/localStorage/" style="font-size: 10px;">localStorage</a> <a href="/tags/npm/" style="font-size: 10px;">npm</a> <a href="/tags/promise/" style="font-size: 10px;">promise</a> <a href="/tags/react/" style="font-size: 10px;">react</a> <a href="/tags/recursion/" style="font-size: 10px;">recursion</a> <a href="/tags/virtual-dom/" style="font-size: 10px;">virtual-dom</a> <a href="/tags/优化/" style="font-size: 10px;">优化</a> <a href="/tags/年度挑战/" style="font-size: 10px;">年度挑战</a> <a href="/tags/性能优化/" style="font-size: 13.33px;">性能优化</a> <a href="/tags/生活/" style="font-size: 10px;">生活</a>
+        </div>
+    </div>
+
+    
+        
+    <div class="widget-wrap widget-list">
+        <h3 class="widget-title">链接</h3>
+        <div class="widget">
+            <ul>
+                
+                    <li>
+                        <a href="http://hexo.io">Hexo</a>
+                    </li>
+                
+            </ul>
+        </div>
+    </div>
+
+
+    
+    <div id="toTop" class="fa fa-angle-up"></div>
+</aside>
+
+            
+        </div>
+        <footer id="footer">
+    <div class="outer">
+        <div id="footer-info" class="inner">
+            &copy; 2020 Mor<br>
+            Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>. Theme by <a href="http://github.com/ppoffice">PPOffice</a>
+            <br>
+            <!--
+            <a href="https://www.upyun.com/?utm_source=lianmeng&utm_medium=referral" target="_blank">又拍云提供CDN及云存储服务</a>
+            <img src="css/images/youpai.png" style="width: 36px;position: relative;top: 12px;margin-left: 10px;">
+            -->
+        </div>
+    </div>
+</footer>
+        
+
+
+    
+        <script src="/libs/lightgallery/js/lightgallery.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-thumbnail.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-pager.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-autoplay.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-fullscreen.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-zoom.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-hash.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-share.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-video.min.js"></script>
+    
+    
+        <script src="/libs/justified-gallery/jquery.justifiedGallery.min.js"></script>
+    
+    
+
+
+
+<!-- Custom Scripts -->
+<script src="/js/main.js"></script>
+
+    </div>
+</body>
+</html>

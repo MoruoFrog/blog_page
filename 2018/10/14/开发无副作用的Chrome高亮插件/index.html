@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang=zh>
+<head>
+    <meta charset="utf-8">
+    
+    <title>开发一款无副作用的Chrome高亮插件 | Moruo&#39;s Blog</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+    <meta name="description" content="审核业务的同事需要一款chrome高亮插件来加快审核，由于涉及到敏感的数据，因此不放心第三方的插件，并且调研发现很多chrome商店的高亮插件并不能兼容使用mvvm框架编写的网页，都存在一定的副作，用当被高亮的内容被修改时会造成信息显示错误，于是决定自己开发一个。 GitHub">
+<meta name="keywords" content="javascript,chrome插件,Mutation Observer">
+<meta property="og:type" content="article">
+<meta property="og:title" content="开发一款无副作用的Chrome高亮插件">
+<meta property="og:url" content="moruo.vip/2018/10/14/开发无副作用的Chrome高亮插件/index.html">
+<meta property="og:site_name" content="Moruo&#39;s Blog">
+<meta property="og:description" content="审核业务的同事需要一款chrome高亮插件来加快审核，由于涉及到敏感的数据，因此不放心第三方的插件，并且调研发现很多chrome商店的高亮插件并不能兼容使用mvvm框架编写的网页，都存在一定的副作，用当被高亮的内容被修改时会造成信息显示错误，于是决定自己开发一个。 GitHub">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2020-01-06T07:54:49.484Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="开发一款无副作用的Chrome高亮插件">
+<meta name="twitter:description" content="审核业务的同事需要一款chrome高亮插件来加快审核，由于涉及到敏感的数据，因此不放心第三方的插件，并且调研发现很多chrome商店的高亮插件并不能兼容使用mvvm框架编写的网页，都存在一定的副作，用当被高亮的内容被修改时会造成信息显示错误，于是决定自己开发一个。 GitHub">
+    
+
+    
+
+    
+        <link rel="icon" href="/css/images/favicon.ico" />
+    
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-120548962-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+
+        gtag('config', 'UA-120548962-1');
+    </script>
+
+    <link rel="stylesheet" href="/libs/font-awesome/css/font-awesome.min.css">
+    <link rel="stylesheet" href="/libs/open-sans/styles.css">
+    <link rel="stylesheet" href="/libs/source-code-pro/styles.css">
+
+    <link rel="stylesheet" href="/css/style.css">
+
+    <script src="/libs/jquery/2.1.3/jquery.min.js"></script>
+    
+    
+        <link rel="stylesheet" href="/libs/lightgallery/css/lightgallery.min.css">
+    
+    
+        <link rel="stylesheet" href="/libs/justified-gallery/justifiedGallery.min.css">
+    
+    
+    
+    
+
+
+</head>
+
+<body>
+    <div id="container">
+        <header id="header">
+    <div id="header-main" class="header-inner">
+        <div class="outer">
+            <!-- <a href="/" id="logo">
+                <i class="logo"></i>
+                <span class="site-title">Moruo&#39;s Blog</span>
+            </a> -->
+            <a href="/" id="logo">
+
+                <span class="site-title">呱呱呱</span>
+            </a>
+            <nav id="main-nav">
+                
+                    <a class="main-nav-link" href="/.">主页</a>
+                
+                    <a class="main-nav-link" href="/archives">归档</a>
+                
+                    <a class="main-nav-link" href="/about">关于</a>
+                
+            </nav>
+            
+                
+                <nav id="sub-nav">
+                    <div class="profile" id="profile-nav">
+                        <a id="profile-anchor" href="javascript:;">
+                            <img class="avatar" src="/css/images/avatar.jpg" />
+                            <i class="fa fa-caret-down"></i>
+                        </a>
+                    </div>
+                </nav>
+            
+            <div id="search-form-wrap">
+
+    <form class="search-form">
+        <input type="text" class="ins-search-input search-form-input" placeholder="搜索" />
+        <button type="submit" class="search-form-submit"></button>
+    </form>
+    <div class="ins-search">
+    <div class="ins-search-mask"></div>
+    <div class="ins-search-container">
+        <div class="ins-input-wrapper">
+            <input type="text" class="ins-search-input" placeholder="想要查找什么..." />
+            <span class="ins-close ins-selectable"><i class="fa fa-times-circle"></i></span>
+        </div>
+        <div class="ins-section-wrapper">
+            <div class="ins-section-container"></div>
+        </div>
+    </div>
+</div>
+<script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: '文章',
+            PAGES: '页面',
+            CATEGORIES: '分类',
+            TAGS: '标签',
+            UNTITLED: '(未命名)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+<script src="/js/insight.js"></script>
+
+</div>
+        </div>
+    </div>
+    <div id="main-nav-mobile" class="header-sub header-inner">
+        <table class="menu outer">
+            <tr>
+                
+                    <td><a class="main-nav-link" href="/.">Home</a></td>
+                
+                    <td><a class="main-nav-link" href="/archives">Archives</a></td>
+                
+                    <td><a class="main-nav-link" href="/about">About</a></td>
+                
+                <td>
+                    
+    <div class="search-form">
+        <input type="text" class="ins-search-input search-form-input" placeholder="搜索" />
+    </div>
+
+                </td>
+            </tr>
+        </table>
+    </div>
+</header>
+
+        <div class="outer">
+            
+                
+
+<aside id="profile">
+    <div class="inner profile-inner">
+        <div class="base-info profile-block">
+            <img id="avatar" src="/css/images/avatar.jpg" />
+            <h2 id="name">莫若</h2>
+            <h3 id="title">Years as songs</h3>
+            <span id="location"><i class="fa fa-map-marker"></i>ChengDu, China</span>
+            <a id="follow" target="_blank" href="https://github.com/MoruoFrog">关注我</a>
+        </div>
+        <div class="article-info profile-block">
+            <div class="article-info-block">
+                13
+                <span>文章</span>
+            </div>
+            <div class="article-info-block">
+                19
+                <span>标签</span>
+            </div>
+        </div>
+        
+        <div class="profile-block social-links">
+            <table>
+                <tr>
+                    
+                    
+                    <td>
+                        <a href="https://github.com/MoruoFrog" target="_blank" title="github" class=tooltip>
+                            <i class="fa fa-github"></i>
+                            
+                        </a>
+                    </td>
+                    
+                    <td>
+                        <a href="https://segmentfault.com/u/_58a665056a5e4" target="_blank" title="segmentfault" class=tooltip>
+                            <i class="fa fa-segmentfault"></i>
+                            
+                                sf
+                            
+                        </a>
+                    </td>
+                    
+                </tr>
+            </table>
+        </div>
+        
+    </div>
+</aside>
+
+            
+            <section id="main"><article id="post-开发无副作用的Chrome高亮插件" class="article article-type-post" itemscope itemprop="blogPost">
+    <div class="article-inner">
+        
+        
+            <header class="article-header">
+                
+    
+        <h1 class="article-title" itemprop="name">
+            开发一款无副作用的Chrome高亮插件
+        </h1>
+    
+
+                
+                    <div class="article-meta">
+                        
+    <div class="article-date">
+        <i class="fa fa-calendar"></i>
+        <a href="/2018/10/14/开发无副作用的Chrome高亮插件/">
+            <time datetime="2018-10-14T13:03:20.000Z" itemprop="datePublished">2018-10-14</time>
+        </a>
+    </div>
+
+
+                        
+    <div class="article-category">
+    	<i class="fa fa-folder"></i>
+        <a class="article-category-link" href="/categories/article/">article</a>
+    </div>
+
+                        
+    <div class="article-tag">
+        <i class="fa fa-tag"></i>
+        <a class="tag-link" href="/tags/Mutation-Observer/">Mutation Observer</a>, <a class="tag-link" href="/tags/chrome插件/">chrome插件</a>, <a class="tag-link" href="/tags/javascript/">javascript</a>
+    </div>
+
+                    </div>
+                
+            </header>
+        
+        
+        <div class="article-entry" itemprop="articleBody">
+        
+            
+            <p>审核业务的同事需要一款chrome高亮插件来加快审核，由于涉及到敏感的数据，因此不放心第三方的插件，并且调研发现很多chrome商店的高亮插件并不能兼容使用mvvm框架编写的网页，都存在一定的副作，用当被高亮的内容被修改时会造成信息显示错误，于是决定自己开发一个。</p>
+<p><a href="https://github.com/MoruoFrog/Chrome-Highlight" target="_blank" rel="noopener">GitHub</a></p>
+<a id="more"></a>
+<h2 id="Chrome插件"><a href="#Chrome插件" class="headerlink" title="Chrome插件"></a>Chrome插件</h2><p>总的来说，Chrome插件的开发完全是前端的技术，跟写一个网页、js类库并没有区别，一个前端技能娴熟的程序员可以在简单阅读文档后迅速进行Chrome插件的开发。</p>
+<h3 id="content-script"><a href="#content-script" class="headerlink" title="content_script"></a>content_script</h3><p>Chrome插件提供在网页中注入js代码（xss既视感）的能力，这些js代码就是content_script。注入的js代码和网页本身的js代码可以理解为不在同一个作用域，不能直接交互，但是可以访问DOM。高亮就是由content_script操作DOM实现。</p>
+<h3 id="popup"><a href="#popup" class="headerlink" title="popup"></a>popup</h3><p>pop_up就是点击插件图标时出现的页面，在高亮插件里，这个页面用来输入高亮关键字、控制插件开关。</p>
+<h3 id="storage与通信"><a href="#storage与通信" class="headerlink" title="storage与通信"></a>storage与通信</h3><p>chrome提供了用于存储和通信的api。</p>
+<p>storage分为local, sync, managed 3种类型。local类似于localStorage，sync在登录了google账号的情况下会把数据存放在云端，若未登录则使用local。需要注意2点：1. chrome stroage的操作是异步的。2. 存放的数据自动进行了parse，不像localSrorage存储的是String。</p>
+<p>通信的api用于content_script、popup、background之间的通信。</p>
+<p>以上就是开发一款chrome高亮插件需要了解的知识点。仅仅使用了chrome插件可以使用的一小部分能力。</p>
+<h2 id="高亮算法"><a href="#高亮算法" class="headerlink" title="高亮算法"></a>高亮算法</h2><p>在页面展示文本一般有两种途径：</p>
+<ul>
+<li>TextNode</li>
+<li>利用input的value或者placeholder(百度首页的「百度一下」按钮就是使用input的value做的)</li>
+</ul>
+<p>通常来说input标签的属性我们是不能乱动的，所以只需要关注TextNode。</p>
+<p>给定一个关键字列表</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">keyWrods = [<span class="string">'我'</span>, <span class="string">'爱'</span>, <span class="string">'她'</span>]</span><br></pre></td></tr></table></figure>
+<p>给定一个文本节点及其父节点</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">p</span>&gt;</span>其实，我真的爱着她<span class="tag">&lt;/<span class="name">p</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<p>比较自然的思路是使用字符串的replace方法进行正则匹配就可以完成高亮了。<br>所以这里有两个问题：</p>
+<ul>
+<li>生成正则</li>
+<li>完成高亮</li>
+</ul>
+<h3 id="生成正则"><a href="#生成正则" class="headerlink" title="生成正则"></a>生成正则</h3><p>只有一点需要注意，特殊字符需要进行转义，比如”/“、”.”等等</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> getRegFromStrList = (<span class="function"><span class="keyword">function</span> (<span class="params"></span>) </span>&#123;</span><br><span class="line">  <span class="keyword">const</span> metaStrInReg = [</span><br><span class="line">    <span class="string">'*'</span>, <span class="string">'^'</span>, <span class="string">'$'</span>, <span class="string">'*'</span>, <span class="string">'+'</span>, <span class="string">'?'</span>, <span class="string">'&#123;'</span>, <span class="string">'&#125;'</span>,</span><br><span class="line">    <span class="string">'?'</span>, <span class="string">'.'</span>, <span class="string">'('</span>, <span class="string">')'</span>, <span class="string">'!'</span>, <span class="string">'|'</span>, <span class="string">'\\'</span>,</span><br><span class="line">  ]</span><br><span class="line">  <span class="keyword">const</span> reg = <span class="keyword">new</span> <span class="built_in">RegExp</span>(metaStrInReg.map(<span class="function"><span class="params">s</span> =&gt;</span> <span class="string">`\\<span class="subst">$&#123;s&#125;</span>`</span>).join(<span class="string">'|'</span>), <span class="string">'g'</span>)</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> <span class="function"><span class="params">arr</span> =&gt;</span> &#123;</span><br><span class="line">    <span class="keyword">if</span> (!<span class="built_in">Array</span>.isArray(arr)) <span class="keyword">return</span> <span class="literal">false</span></span><br><span class="line">    <span class="keyword">if</span> (arr.length === <span class="number">0</span>) <span class="keyword">return</span> <span class="literal">false</span></span><br><span class="line">    <span class="keyword">const</span> regStr = arr.map(<span class="function"><span class="params">str</span> =&gt;</span> str.replace(reg, match =&gt; <span class="string">`\\<span class="subst">$&#123;match&#125;</span>`</span>)).join(<span class="string">'|'</span>)</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">new</span> <span class="built_in">RegExp</span>(regStr, <span class="string">'g'</span>)</span><br><span class="line">  &#125;</span><br><span class="line">&#125;)()</span><br></pre></td></tr></table></figure>
+<h3 id="高亮单个文本节点"><a href="#高亮单个文本节点" class="headerlink" title="高亮单个文本节点"></a>高亮单个文本节点</h3><p>把匹配到的字符外面包裹一个wrap元素添加高亮的样式，然后整体替换到这个文本节点就可以了，由于做的是一个chrome插件，所以使用了一个只有chrome支持的实验性api: node.replaceWith，可以非常方便完成节点的替换操作。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> reg = getRegFromStrList(keyWords)</span><br><span class="line">  <span class="comment">// 高亮单个text-node</span></span><br><span class="line"><span class="keyword">const</span> highlightTextNode = <span class="function"><span class="params">node</span> =&gt;</span> &#123;</span><br><span class="line">  <span class="keyword">if</span> (!reg) <span class="keyword">return</span></span><br><span class="line">  <span class="keyword">if</span> (node.nodeType !== <span class="number">3</span>) <span class="keyword">return</span></span><br><span class="line">  text = node.data</span><br><span class="line">  <span class="keyword">if</span> (text.search(reg) === <span class="number">-1</span>) <span class="keyword">return</span></span><br><span class="line"></span><br><span class="line">  <span class="keyword">const</span> styleTypeCount = <span class="number">6</span> <span class="comment">// 样式种类数量</span></span><br><span class="line">  <span class="keyword">const</span> gethighLightTagHead = <span class="function"><span class="params">i</span> =&gt;</span> &#123;</span><br><span class="line">    <span class="keyword">const</span> index = i % styleTypeCount + <span class="number">1</span></span><br><span class="line">    <span class="keyword">return</span> <span class="string">`&lt;span\</span></span><br><span class="line"><span class="string">              class="_higtlight_chrome_extension_mor _higtlight_chrome_extension_mor__style__<span class="subst">$&#123;index&#125;</span>"\</span></span><br><span class="line"><span class="string">              data-highlighted="1"&gt;`</span></span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">const</span> highLightTagTail = <span class="string">'&lt;/span&gt;'</span></span><br><span class="line"></span><br><span class="line">  <span class="keyword">const</span> newElement = <span class="built_in">document</span>.createElement(<span class="string">'morun'</span>)</span><br><span class="line">  <span class="comment">// 生成有高亮样式的dom元素</span></span><br><span class="line">  newElement.innerHTML = text.replace(reg, match =&gt; &#123;</span><br><span class="line">    <span class="keyword">const</span> index = keywords.indexOf(match)</span><br><span class="line">    <span class="keyword">if</span> (index &gt; <span class="number">-1</span>) &#123;</span><br><span class="line">      <span class="keyword">return</span> <span class="string">`<span class="subst">$&#123;gethighLightTagHead(index)&#125;</span><span class="subst">$&#123;match&#125;</span><span class="subst">$&#123;highLightTagTail&#125;</span>`</span></span><br><span class="line">    &#125;</span><br><span class="line">  &#125;)</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 保留原始文本节点，但是清除它的内容，不让原来的文本内容显示</span></span><br><span class="line">  node.textContent = <span class="string">''</span></span><br><span class="line">  <span class="comment">// 这次的mutation不用追踪，不能触发下一轮的replacedNodeObserver，否则会清除高亮</span></span><br><span class="line">  node.needTrack = <span class="literal">false</span></span><br><span class="line">  <span class="comment">// 利用micro-queue的优先调度</span></span><br><span class="line">  setTimeout(<span class="function"><span class="params">()</span> =&gt;</span> node.needTrack = <span class="literal">true</span>)</span><br><span class="line">  <span class="comment">// 在已经是空的文本节点之前插入高亮节点，完成高亮</span></span><br><span class="line">  node.before(newElement)</span><br><span class="line">  originTextNodes.push(node)</span><br><span class="line">  node.responsedNode = newElement</span><br><span class="line">  replacedNodeObserver.observe(node, &#123;</span><br><span class="line">    <span class="string">'childList'</span>: <span class="literal">true</span>,</span><br><span class="line">    <span class="string">'characterData'</span>: <span class="literal">true</span>,</span><br><span class="line">    <span class="string">'subtree'</span>: <span class="literal">true</span>,</span><br><span class="line">    <span class="string">'attributes'</span>: <span class="literal">true</span>,</span><br><span class="line">  &#125;)</span><br><span class="line">  observerRemove(node)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="遍历DOM"><a href="#遍历DOM" class="headerlink" title="遍历DOM"></a>遍历DOM</h3><p>遍历DOM，对每一个文本节点使用刚才的高亮算法，就完成了高亮。</p>
+<p>有两种思路对DOM进行遍历。</p>
+<ul>
+<li>遍历document.all</li>
+<li>遍历DOM树</li>
+</ul>
+<p>我采用的是层序遍历DOM的方法。有一点需要注意的是需要忽略掉一些特殊的标签，比如script, style，meta等等。</p>
+<h2 id="观察DOM变动"><a href="#观察DOM变动" class="headerlink" title="观察DOM变动"></a>观察DOM变动</h2><h3 id="Mutation-Observer"><a href="#Mutation-Observer" class="headerlink" title="Mutation Observer"></a>Mutation Observer</h3><p>Mutation Observer 就是一个观察DOM变动的API，可以观察所有的DOM变动，包括属性，子孙节点，文本等等。</p>
+<p>需要注意在每一个event-loop中，所有的DOM变动会进行合并，并不会多次触发，而且这个回调是异步的，并且是在micro-task中。</p>
+<p>这一点非常重要，因为每高亮一个节点，就会产生一次DOM变动，如果每一次文本变动都会触发Mutation Observer，就会造成性能问题，而且，由于回调在micro-task中，使用throttle也不能很好的解决，因为通常的throttle是使用setTimeout来实现的。</p>
+<h3 id="标记已被高亮的node"><a href="#标记已被高亮的node" class="headerlink" title="标记已被高亮的node"></a>标记已被高亮的node</h3><p>在遍历DOM的过程，需要跳过已经被高亮过的节点，因为在遍历DOM进行高亮之后会造成DOM变动，所以在这一个tick执行完之后，会进入micro-task再执行高亮函数，由于匹配到关键字的文本一直存在，又会继续进行高亮，一直无限循环下去。</p>
+<p>所以对需要更新高亮算法，把已被高亮的节点做一个标记，遍历DOM的时候遇到标记就跳过。</p>
+<h3 id="如何取消高亮"><a href="#如何取消高亮" class="headerlink" title="如何取消高亮"></a>如何取消高亮</h3><p>高亮之后，肯定需要能够取消，比如要提供一个开关，控制高亮插件的关闭，比如更新关键字的时候需要把DOM回退。</p>
+<p>在进行高亮的时候，使用一个数组把这个textNode存起来，并且在textNode上添加一个responsedNode属性，指向的就是替换掉这个textNode的元素。当需要取消高亮的时候，遍历这个数组，替换回去就可以了。</p>
+<h2 id="在MVVM下工作"><a href="#在MVVM下工作" class="headerlink" title="在MVVM下工作"></a>在MVVM下工作</h2><p>现在很多的网站是使用MVVM框架写的，比如Vue, React等等，框架会把很多DOM对象和一个javascript对象（virtual dom、数据）对应起来，当数据变化时更新（渲染）页面，比如使用textNode.textNode = newText。那么问题来了。</p>
+<p>建立对应关系是在模板解析阶段完成的，这个时候并没有渲染DOM，高亮插件也没有对DOM进行过改变。当网页渲染好，高亮函数进行高亮的时候，我们「替換」掉了textNode，textNode是什么，就是一个<strong>对象</strong>，而框架保留的是对被我们<strong>替换</strong>掉的textNode的引用，所以当数据更新后，页面并不会发生变化，这就很尴尬了。不过既然发现了造成问题的原因，那么就好解决了。</p>
+<h3 id="观察被替换掉的节点"><a href="#观察被替换掉的节点" class="headerlink" title="观察被替换掉的节点"></a>观察被替换掉的节点</h3><p>思路很简单，当被替换掉的文本节点有变动的时候，我们把它换回去就OK了。</p>
+<p>我首先尝试的是使用Object.defineProperty定义setter来解决，不过显然是我天真，textNode的textContent属性是non-configurable的，无法重新定义。</p>
+<p>so，还是拿起了之前用过的Mutation Observer武器，问题解决。当对一个文本节点进行高亮的时候，使用Mutation Observer对它进行观察，当发生变动时把原文本节点替换回去，这一次的替换又会造成一次DOM变动触发Mutation Observer，对新的文本进行高亮。</p>
+<h3 id="观察被替换掉的节点父节点"><a href="#观察被替换掉的节点父节点" class="headerlink" title="观察被替换掉的节点父节点"></a>观察被替换掉的节点父节点</h3><p>现在还有一个问题，一个节点本身被移除这个操作是没法通过观察它自己来监测到的，只能通过观察它的父节点来完成，所以还需要观察被替换掉的节点父节点，当观察到这个节点被移除是需要同步移除高亮节点。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>通过这个项目还是学到了不少东西，知识水平得到了提高。</p>
+<ul>
+<li>Chrome插件的开发</li>
+<li>Mutation Observer</li>
+<li>mvvm的渲染流程</li>
+<li>正则处理</li>
+<li>熟悉了更多的DOM API</li>
+</ul>
+
+        
+        </div>
+        <!--
+        <footer class="article-footer">
+            <div class="share-container">
+
+
+
+</div>
+
+    <a data-url="moruo.vip/2018/10/14/开发无副作用的Chrome高亮插件/" data-id="ck8ldy0ms000mrd8qddx88m5f" class="article-share-link"><i class="fa fa-share"></i>分享到</a>
+<script>
+    (function ($) {
+        // Prevent duplicate binding
+        if (typeof(__SHARE_BUTTON_BINDED__) === 'undefined' || !__SHARE_BUTTON_BINDED__) {
+            __SHARE_BUTTON_BINDED__ = true;
+        } else {
+            return;
+        }
+        $('body').on('click', function() {
+            $('.article-share-box.on').removeClass('on');
+        }).on('click', '.article-share-link', function(e) {
+            e.stopPropagation();
+
+            var $this = $(this),
+                url = $this.attr('data-url'),
+                encodedUrl = encodeURIComponent(url),
+                id = 'article-share-box-' + $this.attr('data-id'),
+                offset = $this.offset(),
+                box;
+
+            if ($('#' + id).length) {
+                box = $('#' + id);
+
+                if (box.hasClass('on')){
+                    box.removeClass('on');
+                    return;
+                }
+            } else {
+                var html = [
+                    '<div id="' + id + '" class="article-share-box">',
+                        '<input class="article-share-input" value="' + url + '">',
+                        '<div class="article-share-links">',
+                            '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="fa fa-twitter article-share-twitter" target="_blank" title="Twitter"></a>',
+                            '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="fa fa-facebook article-share-facebook" target="_blank" title="Facebook"></a>',
+                            '<a href="http://pinterest.com/pin/create/button/?url=' + encodedUrl + '" class="fa fa-pinterest article-share-pinterest" target="_blank" title="Pinterest"></a>',
+                            '<a href="https://plus.google.com/share?url=' + encodedUrl + '" class="fa fa-google article-share-google" target="_blank" title="Google+"></a>',
+                        '</div>',
+                    '</div>'
+                ].join('');
+
+              box = $(html);
+
+              $('body').append(box);
+            }
+
+            $('.article-share-box.on').hide();
+
+            box.css({
+                top: offset.top + 25,
+                left: offset.left
+            }).addClass('on');
+
+        }).on('click', '.article-share-box', function (e) {
+            e.stopPropagation();
+        }).on('click', '.article-share-box-input', function () {
+            $(this).select();
+        }).on('click', '.article-share-box-link', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            window.open(this.href, 'article-share-box-window-' + Date.now(), 'width=500,height=450');
+        });
+    })(jQuery);
+</script>
+
+            
+    
+
+        </footer>
+        -->
+    </div>
+    
+        
+<nav id="article-nav">
+    
+        <a href="/2018/11/06/减小发布到npm包的体积与避免重复依赖/" id="article-nav-newer" class="article-nav-link-wrap">
+            <strong class="article-nav-caption">上一篇</strong>
+            <div class="article-nav-title">
+                
+                    减小发布到npm包的体积与避免重复依赖
+                
+            </div>
+        </a>
+    
+    
+        <a href="/2018/09/25/Axios统一错误处理与后置/" id="article-nav-older" class="article-nav-link-wrap">
+            <strong class="article-nav-caption">下一篇</strong>
+            <div class="article-nav-title">Axios统一错误处理与后置</div>
+        </a>
+    
+</nav>
+
+
+    
+</article>
+
+
+    
+    
+
+</section>
+            
+                
+<aside id="sidebar">
+   
+        
+    <div class="widget-wrap">
+        <h3 class="widget-title">最新文章</h3>
+        <div class="widget">
+            <ul id="recent-post" class="no-thumbnail">
+                
+                    <li>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/article/">article</a></p>
+                            <p class="item-title"><a href="/2020/01/01/2020年计划/" class="title">2020年度挑战计划</a></p>
+                            <p class="item-date"><time datetime="2020-01-01T02:29:00.000Z" itemprop="datePublished">2020-01-01</time></p>
+                        </div>
+                    </li>
+                
+                    <li>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/article/">article</a></p>
+                            <p class="item-title"><a href="/2019/11/07/部署es6代码/" class="title">生产环境部署es6代码</a></p>
+                            <p class="item-date"><time datetime="2019-11-07T15:28:00.000Z" itemprop="datePublished">2019-11-07</time></p>
+                        </div>
+                    </li>
+                
+                    <li>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/article/">article</a></p>
+                            <p class="item-title"><a href="/2019/09/18/大数据量场景下的Vue性能优化/" class="title">大数据量场景下的Vue性能优化</a></p>
+                            <p class="item-date"><time datetime="2019-09-18T12:10:00.000Z" itemprop="datePublished">2019-09-18</time></p>
+                        </div>
+                    </li>
+                
+                    <li>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/article/">article</a></p>
+                            <p class="item-title"><a href="/2019/06/04/hookEvent of Vue/" class="title">hookEvent of Vue</a></p>
+                            <p class="item-date"><time datetime="2019-06-04T14:22:20.000Z" itemprop="datePublished">2019-06-04</time></p>
+                        </div>
+                    </li>
+                
+                    <li>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/article/">article</a></p>
+                            <p class="item-title"><a href="/2019/02/13/localStorage操作指北/" class="title">localStorage操作指北</a></p>
+                            <p class="item-date"><time datetime="2019-02-13T13:29:00.000Z" itemprop="datePublished">2019-02-13</time></p>
+                        </div>
+                    </li>
+                
+            </ul>
+        </div>
+    </div>
+
+    
+        
+    <div class="widget-wrap">
+        <h3 class="widget-title">归档</h3>
+        <div class="widget">
+            <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/01/">一月 2020</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/11/">十一月 2019</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/09/">九月 2019</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/06/">六月 2019</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/02/">二月 2019</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/12/">十二月 2018</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/11/">十一月 2018</a><span class="archive-list-count">3</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/10/">十月 2018</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/09/">九月 2018</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/06/">六月 2018</a><span class="archive-list-count">1</span></li></ul>
+        </div>
+    </div>
+
+    
+        
+    <div class="widget-wrap">
+        <h3 class="widget-title">标签</h3>
+        <div class="widget">
+            <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/tags/Mutation-Observer/">Mutation Observer</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Vue/">Vue</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Vue渲染原理/">Vue渲染原理</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ajax/">ajax</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/algorithm/">algorithm</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/axios/">axios</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/chrome插件/">chrome插件</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/dialoag/">dialoag</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/javascript/">javascript</a><span class="tag-list-count">6</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/localStorage/">localStorage</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/npm/">npm</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/promise/">promise</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/react/">react</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/recursion/">recursion</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/virtual-dom/">virtual-dom</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/优化/">优化</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/年度挑战/">年度挑战</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/性能优化/">性能优化</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/生活/">生活</a><span class="tag-list-count">1</span></li></ul>
+        </div>
+    </div>
+
+    
+        
+    <div class="widget-wrap">
+        <h3 class="widget-title">标签云</h3>
+        <div class="widget tagcloud">
+            <a href="/tags/Mutation-Observer/" style="font-size: 10px;">Mutation Observer</a> <a href="/tags/Vue/" style="font-size: 16.67px;">Vue</a> <a href="/tags/Vue渲染原理/" style="font-size: 10px;">Vue渲染原理</a> <a href="/tags/ajax/" style="font-size: 10px;">ajax</a> <a href="/tags/algorithm/" style="font-size: 10px;">algorithm</a> <a href="/tags/axios/" style="font-size: 10px;">axios</a> <a href="/tags/chrome插件/" style="font-size: 10px;">chrome插件</a> <a href="/tags/dialoag/" style="font-size: 10px;">dialoag</a> <a href="/tags/javascript/" style="font-size: 20px;">javascript</a> <a href="/tags/localStorage/" style="font-size: 10px;">localStorage</a> <a href="/tags/npm/" style="font-size: 10px;">npm</a> <a href="/tags/promise/" style="font-size: 10px;">promise</a> <a href="/tags/react/" style="font-size: 10px;">react</a> <a href="/tags/recursion/" style="font-size: 10px;">recursion</a> <a href="/tags/virtual-dom/" style="font-size: 10px;">virtual-dom</a> <a href="/tags/优化/" style="font-size: 10px;">优化</a> <a href="/tags/年度挑战/" style="font-size: 10px;">年度挑战</a> <a href="/tags/性能优化/" style="font-size: 13.33px;">性能优化</a> <a href="/tags/生活/" style="font-size: 10px;">生活</a>
+        </div>
+    </div>
+
+    
+        
+    <div class="widget-wrap widget-list">
+        <h3 class="widget-title">链接</h3>
+        <div class="widget">
+            <ul>
+                
+                    <li>
+                        <a href="http://hexo.io">Hexo</a>
+                    </li>
+                
+            </ul>
+        </div>
+    </div>
+
+
+    
+    <div id="toTop" class="fa fa-angle-up"></div>
+</aside>
+
+            
+        </div>
+        <footer id="footer">
+    <div class="outer">
+        <div id="footer-info" class="inner">
+            &copy; 2020 Mor<br>
+            Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>. Theme by <a href="http://github.com/ppoffice">PPOffice</a>
+            <br>
+            <!--
+            <a href="https://www.upyun.com/?utm_source=lianmeng&utm_medium=referral" target="_blank">又拍云提供CDN及云存储服务</a>
+            <img src="css/images/youpai.png" style="width: 36px;position: relative;top: 12px;margin-left: 10px;">
+            -->
+        </div>
+    </div>
+</footer>
+        
+
+
+    
+        <script src="/libs/lightgallery/js/lightgallery.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-thumbnail.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-pager.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-autoplay.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-fullscreen.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-zoom.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-hash.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-share.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-video.min.js"></script>
+    
+    
+        <script src="/libs/justified-gallery/jquery.justifiedGallery.min.js"></script>
+    
+    
+
+
+
+<!-- Custom Scripts -->
+<script src="/js/main.js"></script>
+
+    </div>
+</body>
+</html>

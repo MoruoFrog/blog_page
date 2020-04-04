@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang=zh>
+<head>
+    <meta charset="utf-8">
+    
+    <title>实现一个符合Promise/A+标准的Promise | Moruo&#39;s Blog</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+    <meta name="description" content="– What i can’t create, i don’t understant 前言实现Promise的目的是为了深入的理解Promies，以在项目中游刃有余的使用它。完整的代码见gitHub">
+<meta name="keywords" content="javascript,promise">
+<meta property="og:type" content="article">
+<meta property="og:title" content="实现一个符合Promise&#x2F;A+标准的Promise">
+<meta property="og:url" content="moruo.vip/2018/06/23/promise/index.html">
+<meta property="og:site_name" content="Moruo&#39;s Blog">
+<meta property="og:description" content="– What i can’t create, i don’t understant 前言实现Promise的目的是为了深入的理解Promies，以在项目中游刃有余的使用它。完整的代码见gitHub">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2020-01-06T07:54:49.484Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="实现一个符合Promise&#x2F;A+标准的Promise">
+<meta name="twitter:description" content="– What i can’t create, i don’t understant 前言实现Promise的目的是为了深入的理解Promies，以在项目中游刃有余的使用它。完整的代码见gitHub">
+    
+
+    
+
+    
+        <link rel="icon" href="/css/images/favicon.ico" />
+    
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-120548962-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+
+        gtag('config', 'UA-120548962-1');
+    </script>
+
+    <link rel="stylesheet" href="/libs/font-awesome/css/font-awesome.min.css">
+    <link rel="stylesheet" href="/libs/open-sans/styles.css">
+    <link rel="stylesheet" href="/libs/source-code-pro/styles.css">
+
+    <link rel="stylesheet" href="/css/style.css">
+
+    <script src="/libs/jquery/2.1.3/jquery.min.js"></script>
+    
+    
+        <link rel="stylesheet" href="/libs/lightgallery/css/lightgallery.min.css">
+    
+    
+        <link rel="stylesheet" href="/libs/justified-gallery/justifiedGallery.min.css">
+    
+    
+    
+    
+
+
+</head>
+
+<body>
+    <div id="container">
+        <header id="header">
+    <div id="header-main" class="header-inner">
+        <div class="outer">
+            <!-- <a href="/" id="logo">
+                <i class="logo"></i>
+                <span class="site-title">Moruo&#39;s Blog</span>
+            </a> -->
+            <a href="/" id="logo">
+
+                <span class="site-title">呱呱呱</span>
+            </a>
+            <nav id="main-nav">
+                
+                    <a class="main-nav-link" href="/.">主页</a>
+                
+                    <a class="main-nav-link" href="/archives">归档</a>
+                
+                    <a class="main-nav-link" href="/about">关于</a>
+                
+            </nav>
+            
+                
+                <nav id="sub-nav">
+                    <div class="profile" id="profile-nav">
+                        <a id="profile-anchor" href="javascript:;">
+                            <img class="avatar" src="/css/images/avatar.jpg" />
+                            <i class="fa fa-caret-down"></i>
+                        </a>
+                    </div>
+                </nav>
+            
+            <div id="search-form-wrap">
+
+    <form class="search-form">
+        <input type="text" class="ins-search-input search-form-input" placeholder="搜索" />
+        <button type="submit" class="search-form-submit"></button>
+    </form>
+    <div class="ins-search">
+    <div class="ins-search-mask"></div>
+    <div class="ins-search-container">
+        <div class="ins-input-wrapper">
+            <input type="text" class="ins-search-input" placeholder="想要查找什么..." />
+            <span class="ins-close ins-selectable"><i class="fa fa-times-circle"></i></span>
+        </div>
+        <div class="ins-section-wrapper">
+            <div class="ins-section-container"></div>
+        </div>
+    </div>
+</div>
+<script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: '文章',
+            PAGES: '页面',
+            CATEGORIES: '分类',
+            TAGS: '标签',
+            UNTITLED: '(未命名)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+<script src="/js/insight.js"></script>
+
+</div>
+        </div>
+    </div>
+    <div id="main-nav-mobile" class="header-sub header-inner">
+        <table class="menu outer">
+            <tr>
+                
+                    <td><a class="main-nav-link" href="/.">Home</a></td>
+                
+                    <td><a class="main-nav-link" href="/archives">Archives</a></td>
+                
+                    <td><a class="main-nav-link" href="/about">About</a></td>
+                
+                <td>
+                    
+    <div class="search-form">
+        <input type="text" class="ins-search-input search-form-input" placeholder="搜索" />
+    </div>
+
+                </td>
+            </tr>
+        </table>
+    </div>
+</header>
+
+        <div class="outer">
+            
+                
+
+<aside id="profile">
+    <div class="inner profile-inner">
+        <div class="base-info profile-block">
+            <img id="avatar" src="/css/images/avatar.jpg" />
+            <h2 id="name">莫若</h2>
+            <h3 id="title">Years as songs</h3>
+            <span id="location"><i class="fa fa-map-marker"></i>ChengDu, China</span>
+            <a id="follow" target="_blank" href="https://github.com/MoruoFrog">关注我</a>
+        </div>
+        <div class="article-info profile-block">
+            <div class="article-info-block">
+                13
+                <span>文章</span>
+            </div>
+            <div class="article-info-block">
+                19
+                <span>标签</span>
+            </div>
+        </div>
+        
+        <div class="profile-block social-links">
+            <table>
+                <tr>
+                    
+                    
+                    <td>
+                        <a href="https://github.com/MoruoFrog" target="_blank" title="github" class=tooltip>
+                            <i class="fa fa-github"></i>
+                            
+                        </a>
+                    </td>
+                    
+                    <td>
+                        <a href="https://segmentfault.com/u/_58a665056a5e4" target="_blank" title="segmentfault" class=tooltip>
+                            <i class="fa fa-segmentfault"></i>
+                            
+                                sf
+                            
+                        </a>
+                    </td>
+                    
+                </tr>
+            </table>
+        </div>
+        
+    </div>
+</aside>
+
+            
+            <section id="main"><article id="post-promise" class="article article-type-post" itemscope itemprop="blogPost">
+    <div class="article-inner">
+        
+        
+            <header class="article-header">
+                
+    
+        <h1 class="article-title" itemprop="name">
+            实现一个符合Promise/A+标准的Promise
+        </h1>
+    
+
+                
+                    <div class="article-meta">
+                        
+    <div class="article-date">
+        <i class="fa fa-calendar"></i>
+        <a href="/2018/06/23/promise/">
+            <time datetime="2018-06-23T15:12:21.000Z" itemprop="datePublished">2018-06-23</time>
+        </a>
+    </div>
+
+
+                        
+    <div class="article-category">
+    	<i class="fa fa-folder"></i>
+        <a class="article-category-link" href="/categories/article/">article</a>
+    </div>
+
+                        
+    <div class="article-tag">
+        <i class="fa fa-tag"></i>
+        <a class="tag-link" href="/tags/javascript/">javascript</a>, <a class="tag-link" href="/tags/promise/">promise</a>
+    </div>
+
+                    </div>
+                
+            </header>
+        
+        
+        <div class="article-entry" itemprop="articleBody">
+        
+            
+            <p>– What i can’t create, i don’t understant</p>
+<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>实现Promise的目的是为了深入的理解Promies，以在项目中游刃有余的使用它。<a href="https://github.com/MoruoFrog/build-my-own" target="_blank" rel="noopener">完整的代码见gitHub</a></p>
+<a id="more"></a>
+<h2 id="Promise标准"><a href="#Promise标准" class="headerlink" title="Promise标准"></a>Promise标准</h2><p>Promise的标准有很多个版本，本文采用ES6原生Promise使用的Promise/A+标准。<a href="https://promisesaplus.com" target="_blank" rel="noopener">完整的Promise/A+标准见这里</a>，总结如下：</p>
+<ul>
+<li>promise具有状态state(status)，状态分为pending, fulfilled(我比较喜欢叫做resolved)， rejected。初始为pending，一旦状态改变，不能再更改为其它状态。当promise为fulfilled时，具有value；当promise为rejected时，具有reason；value和reason都是一旦确定，不能改变的。</li>
+<li>promise具有then方法，注意了，只有then方法是必须的，其余常用的catch,race,all,resolve等等方法都不是必须的，其实这些方法都可以用then方便的实现。</li>
+<li>不同的promise的实现需要可以相互调用</li>
+</ul>
+<!-- more -->
+<h2 id="Promise构造函数"><a href="#Promise构造函数" class="headerlink" title="Promise构造函数"></a>Promise构造函数</h2><p>产生一个对象有很多种方法，构造函数是看起来最面向对象的一种，而且原生Promise实现也是使用的构造函数，因此我也决定使用构造函数的方法。<br><br>首先，先写一个大概的框架出来：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 众所周知, reject，用来改变promise的状态</span></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">Promise</span>(<span class="params">executor</span>) </span>&#123;</span><br><span class="line">    <span class="keyword">this</span>.status = <span class="string">'pending'</span></span><br><span class="line">    <span class="keyword">this</span>.value = <span class="keyword">void</span> <span class="number">0</span> <span class="comment">// 为了方便把value和reason合并</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">const</span> resolve = <span class="function"><span class="keyword">function</span>(<span class="params"></span>) </span>&#123;&#125;</span><br><span class="line">    <span class="keyword">const</span> reject = <span class="function"><span class="keyword">function</span>(<span class="params"></span>) </span>&#123;&#125; </span><br><span class="line">    executor(resolve, reject)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>很明显，这个构造函数还有很多问题们一个一个来看:</p>
+<ul>
+<li><p>resolve和reject并没有什么卵用<br>  首先，用过promise的都知道,resolve和reject是用来改变promise的状态的：</p>
+  <figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">Promise</span>(<span class="params">executor</span>) </span>&#123;</span><br><span class="line">    <span class="keyword">this</span>.status = <span class="string">'pending'</span></span><br><span class="line">    <span class="keyword">this</span>.value = <span class="keyword">void</span> <span class="number">0</span> <span class="comment">// 为了方便把value和reason合并</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">const</span> resolve = <span class="function"><span class="params">value</span> =&gt;</span> &#123;</span><br><span class="line">        <span class="keyword">this</span>.value = value</span><br><span class="line">        <span class="keyword">this</span>.status = <span class="string">'resolved'</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">const</span> reject = <span class="function"><span class="params">reason</span> =&gt;</span> &#123;</span><br><span class="line">        <span class="keyword">this</span>.value = reason</span><br><span class="line">        <span class="keyword">this</span>.status = <span class="string">'rejected'</span></span><br><span class="line">    &#125; </span><br><span class="line">    executor(resolve, reject)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>  然后，当resolve或者reject调用的时候，需要执行在then方法里传入的相应的函数（通知）。有没有觉得这个有点类似于事件（发布-订阅模式）呢？</p>
+  <figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">Promise</span>(<span class="params">executor</span>) </span>&#123;</span><br><span class="line">    <span class="keyword">this</span>.status = <span class="string">'pending'</span></span><br><span class="line">    <span class="keyword">this</span>.value = <span class="keyword">void</span> <span class="number">0</span> <span class="comment">// 为了方便把value和reason合并</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">this</span>.resolveListeners = []</span><br><span class="line">    <span class="keyword">this</span>.rejectListeners = []</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 通知状态改变</span></span><br><span class="line">    <span class="keyword">const</span> notify(target, val) =&gt; &#123;</span><br><span class="line">        target === <span class="string">'resolved'</span></span><br><span class="line">            ? <span class="keyword">this</span>.resolveListeners.forEach(<span class="function"><span class="params">cb</span> =&gt;</span> cb(val))</span><br><span class="line">            : <span class="keyword">this</span>.rejectListeners.forEach(<span class="function"><span class="params">cb</span> =&gt;</span> cb(val))</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">const</span> resolve = <span class="function"><span class="params">value</span> =&gt;</span> &#123;</span><br><span class="line">        <span class="keyword">this</span>.value = value</span><br><span class="line">        <span class="keyword">this</span>.status = <span class="string">'resolved'</span></span><br><span class="line">        notify(<span class="string">'resolved'</span>, value)</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">const</span> reject = <span class="function"><span class="params">reason</span> =&gt;</span> &#123;</span><br><span class="line">        <span class="keyword">this</span>.value = reason</span><br><span class="line">        <span class="keyword">this</span>.status = <span class="string">'rejected'</span></span><br><span class="line">        notify(<span class="string">'rejected'</span>, reason)</span><br><span class="line">    &#125; </span><br><span class="line">    executor(resolve, reject)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>status和value并没有做到一旦确定，无法更改。这里有两个问题，一是返回的对象暴露了status和value属性，并且可以随意赋值；二是如果在executor里多次调用resolve或者reject，会使value更改多次。<br><br>第一个问题，如何实现只读属性：</p>
+  <figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">Promise</span>(<span class="params">executor</span>) </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">typeof</span> executor !== <span class="string">'function'</span>) &#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> <span class="built_in">Error</span>(<span class="string">'Promise executor must be fucntion'</span>)</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">let</span> status = <span class="string">'pending'</span> <span class="comment">// 闭包形成私有属性</span></span><br><span class="line">    <span class="keyword">let</span> value = <span class="keyword">void</span> <span class="number">0</span></span><br><span class="line"></span><br><span class="line">    ......</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 使用status代替this.value</span></span><br><span class="line">    <span class="keyword">const</span> resolve = <span class="function"><span class="params">val</span> =&gt;</span> &#123;</span><br><span class="line">        value = val</span><br><span class="line">        status = <span class="string">'resolved'</span></span><br><span class="line">        notify(<span class="string">'resolved'</span>, val)</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">const</span> reject = <span class="function"><span class="params">reason</span> =&gt;</span> &#123;</span><br><span class="line">        value = reason</span><br><span class="line">        status = <span class="string">'rejected'</span></span><br><span class="line">        notify(<span class="string">'rejected'</span>, reason)</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 通过getter和setter设置只读属性</span></span><br><span class="line">    <span class="built_in">Object</span>.defineProperty(<span class="keyword">this</span>, <span class="string">'status'</span>, &#123;</span><br><span class="line">        get() &#123;</span><br><span class="line">            <span class="keyword">return</span> status</span><br><span class="line">        &#125;,</span><br><span class="line">        set() &#123;</span><br><span class="line">            <span class="built_in">console</span>.warn(<span class="string">'status is read-only'</span>)</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;)</span><br><span class="line"></span><br><span class="line">    <span class="built_in">Object</span>.defineProperty(<span class="keyword">this</span>, <span class="string">'value'</span>, &#123;</span><br><span class="line">        get() &#123;</span><br><span class="line">            <span class="keyword">return</span> value</span><br><span class="line">        &#125;,</span><br><span class="line">        set() &#123;</span><br><span class="line">            <span class="built_in">console</span>.warn(<span class="string">'value is read-only'</span>)</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;)</span><br></pre></td></tr></table></figure>
+<p>  第二个问题，避免多次调用resolve、reject时改变value，而且标准里(—3 it must not be called more than once)也有规定，then注册的回调只能执行一次。</p>
+  <figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> resolve = <span class="function"><span class="params">val</span> =&gt;</span> &#123;</span><br><span class="line">    <span class="keyword">if</span> (status !== <span class="string">'pending'</span>) <span class="keyword">return</span> <span class="comment">// 避免多次运行</span></span><br><span class="line">    value = val</span><br><span class="line">    status = <span class="string">'resolved'</span></span><br><span class="line">    notify(<span class="string">'resolved'</span>, val)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>then注册的回调需要异步执行。<br></p>
+<p>  说到异步执行，对原生Promise有了解的同学都知道,then注册的回调在Micro-task中，并且调度策略是，Macro-task中执行一个任务，清空所有Micro-task的任务。简而言之，promise异步的优先级更高。<br></p>
+<p>  其实，标准只规定了promise回调需要异步执行，在一个“干净的”执行栈执行，并没有规定一定说要用micro-task，并且在低版本浏览器中，并没有micro-task队列。不过在各种promise的讨论中，由于原生Promise的实现，micro-task已经成成为了事实标准，而且promise回调在micro-task中也使得程序的行为更好预测。</p>
+<p>  在浏览器端，可以用MutationObserver实现Micro-task。本文利用setTimeout来简单实现异步。</p>
+  <figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> resolve = <span class="function"><span class="params">val</span> =&gt;</span> &#123;</span><br><span class="line">    <span class="keyword">if</span> (val <span class="keyword">instanceof</span> <span class="built_in">Promise</span>) &#123;</span><br><span class="line">        <span class="keyword">return</span> val.then(resolve, reject)</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 异步执行</span></span><br><span class="line">    setTimeout(<span class="function"><span class="params">()</span> =&gt;</span> &#123;</span><br><span class="line">        <span class="keyword">if</span> (status !== <span class="string">'pending'</span>) <span class="keyword">return</span></span><br><span class="line"></span><br><span class="line">        status = <span class="string">'resolved'</span></span><br><span class="line">        value = val</span><br><span class="line">        notify(<span class="string">'resolved'</span>, val)</span><br><span class="line">    &#125;, <span class="number">0</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<p>最后，加上错误处理，就得到了一个完整的Promise构造函数：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">Promise</span>(<span class="params">executor</span>) </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">typeof</span> executor !== <span class="string">'function'</span>) &#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> <span class="built_in">Error</span>(<span class="string">'Promise executor must be fucntion'</span>)</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">let</span> status = <span class="string">'pending'</span></span><br><span class="line">    <span class="keyword">let</span> value = <span class="keyword">void</span> <span class="number">0</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">const</span> notify = <span class="function">(<span class="params">target, val</span>) =&gt;</span> &#123;</span><br><span class="line">        target === <span class="string">'resolved'</span></span><br><span class="line">            ? <span class="keyword">this</span>.resolveListeners.forEach(<span class="function"><span class="params">cb</span> =&gt;</span> cb(val))</span><br><span class="line">            : <span class="keyword">this</span>.rejectListeners.forEach(<span class="function"><span class="params">cb</span> =&gt;</span> cb(val))</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">const</span> resolve = <span class="function"><span class="params">val</span> =&gt;</span> &#123;</span><br><span class="line">        <span class="keyword">if</span> (val <span class="keyword">instanceof</span> <span class="built_in">Promise</span>) &#123;</span><br><span class="line">            <span class="keyword">return</span> val.then(resolve, reject)</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        setTimeout(<span class="function"><span class="params">()</span> =&gt;</span> &#123;</span><br><span class="line">            <span class="keyword">if</span> (status !== <span class="string">'pending'</span>) <span class="keyword">return</span></span><br><span class="line"></span><br><span class="line">            status = <span class="string">'resolved'</span></span><br><span class="line">            value = val</span><br><span class="line">            notify(<span class="string">'resolved'</span>, val)</span><br><span class="line">        &#125;, <span class="number">0</span>)</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">const</span> reject = <span class="function"><span class="params">reason</span> =&gt;</span> &#123;</span><br><span class="line">        setTimeout(<span class="function"><span class="params">()</span> =&gt;</span> &#123;</span><br><span class="line">            <span class="keyword">if</span> (status !== <span class="string">'pending'</span>) <span class="keyword">return</span></span><br><span class="line"></span><br><span class="line">            status = <span class="string">'rejected'</span></span><br><span class="line">            value = reason</span><br><span class="line">            notify(<span class="string">'rejected'</span>, reason)</span><br><span class="line">        &#125;, <span class="number">0</span>)</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">this</span>.resolveListeners = []</span><br><span class="line">    <span class="keyword">this</span>.rejectListeners = []</span><br><span class="line"></span><br><span class="line">    <span class="built_in">Object</span>.defineProperty(<span class="keyword">this</span>, <span class="string">'status'</span>, &#123;</span><br><span class="line">        get() &#123;</span><br><span class="line">            <span class="keyword">return</span> status</span><br><span class="line">        &#125;,</span><br><span class="line">        set() &#123;</span><br><span class="line">            <span class="built_in">console</span>.warn(<span class="string">'status is read-only'</span>)</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;)</span><br><span class="line"></span><br><span class="line">    <span class="built_in">Object</span>.defineProperty(<span class="keyword">this</span>, <span class="string">'value'</span>, &#123;</span><br><span class="line">        get() &#123;</span><br><span class="line">            <span class="keyword">return</span> value</span><br><span class="line">        &#125;,</span><br><span class="line">        set() &#123;</span><br><span class="line">            <span class="built_in">console</span>.warn(<span class="string">'value is read-only'</span>)</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">        executor(resolve, reject)</span><br><span class="line">    &#125; <span class="keyword">catch</span> (e) &#123;</span><br><span class="line">        reject(e)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>总的来说，Promise构造函数其实只干了一件事：执行传入的executor，并构造了executor的两个参数</p>
+<h2 id="实现then方法"><a href="#实现then方法" class="headerlink" title="实现then方法"></a>实现then方法</h2><p>首先需要确定的是，then方法是写在构造函数里还是写在原型里。写在构造函数了里有一个比较大的好处：可以像处理status和value一样，通过闭包让resolveListeners和rejectListeners成为私有属性，避免通过this.rejectListeners来改变它。写在构造函数里的缺点是，每一个promise对象都会有一个不同的then方法，这既浪费内存，又不合理。我的选择是写在原型里，为了保持和原生Promise有一样的结构和接口。<br></p>
+<p>ok,还是先写一个大概的框架：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">Promise</span>.prototype.then = <span class="function"><span class="keyword">function</span> (<span class="params">resCb, rejCb</span>) </span>&#123;</span><br><span class="line">    <span class="keyword">this</span>.resolveListeners.push(resCb)</span><br><span class="line">    <span class="keyword">this</span>.rejectListeners.push(rejCb)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">new</span> <span class="built_in">Promise</span>()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>随后，一步一步的完善它：</p>
+<ul>
+<li><p>then方法返回的promise需要根据resCb或rejCb的运行结果来确定状态。</p>
+  <figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">Promise</span>.prototype.then = <span class="function"><span class="keyword">function</span> (<span class="params">resCb, rejCb</span>) </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">new</span> <span class="built_in">Promise</span>(<span class="function">(<span class="params">res, rej</span>) =&gt;</span> &#123;</span><br><span class="line">        <span class="keyword">this</span>.resolveListeners.push(<span class="function">(<span class="params">val</span>) =&gt;</span> &#123;</span><br><span class="line">            <span class="keyword">try</span> &#123;</span><br><span class="line">                <span class="keyword">const</span> x = resCb(val)</span><br><span class="line">                res(x) <span class="comment">// 以resCb的返回值为value来resolve</span></span><br><span class="line">            &#125; <span class="keyword">catch</span> (e) &#123;</span><br><span class="line">                rej(e) <span class="comment">// 如果出错，返回的promise以异常为reason来reject</span></span><br><span class="line">            &#125;</span><br><span class="line">        &#125;)</span><br><span class="line"></span><br><span class="line">        <span class="keyword">this</span>.rejectListeners.push(<span class="function">(<span class="params">val</span>) =&gt;</span> &#123;</span><br><span class="line">            <span class="keyword">try</span> &#123;</span><br><span class="line">                <span class="keyword">const</span> x = rejCb(val)</span><br><span class="line">                res(x) <span class="comment">// 注意这里也是res而不是rej哦</span></span><br><span class="line">            &#125; <span class="keyword">catch</span> (e) &#123;</span><br><span class="line">                rej(e) <span class="comment">// 如果出错，返回的promise以异常为reason来reject</span></span><br><span class="line">            &#125;</span><br><span class="line">        &#125;)</span><br><span class="line">    &#125;)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>  ps：众所周知，promise可以链式调用，说起链式调用，我的第一个想法就是返回this就可以了，但是then方法不可以简单的返回this，而要返回一个新的promise对象。因为promise的状态一旦确定就不能更改，而then方法返回的promise的状态需要根据then回调的运行结果来决定。</p>
+</li>
+<li><p>如果resCb/rejCb返回一个promiseA，then返回的promise需要跟随(adopt)promiseA，也就是说，需要保持和promiseA一样的status和value。</p>
+</li>
+</ul>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">this</span>.resolveListeners.push(<span class="function">(<span class="params">val</span>) =&gt;</span> &#123;</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">        <span class="keyword">const</span> x = resCb(val)</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (x <span class="keyword">instanceof</span> <span class="built_in">Promise</span>) &#123;</span><br><span class="line">            x.then(res, rej) <span class="comment">// adopt promise x</span></span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            res(x)</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; <span class="keyword">catch</span> (e) &#123;</span><br><span class="line">        rej(e)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;)</span><br><span class="line"></span><br><span class="line"><span class="keyword">this</span>.rejectListeners.push(<span class="function">(<span class="params">val</span>) =&gt;</span> &#123;</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">        <span class="keyword">const</span> x = resCb(val)</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (x <span class="keyword">instanceof</span> <span class="built_in">Promise</span>) &#123;</span><br><span class="line">            x.then(res, rej) <span class="comment">// adopt promise x</span></span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            res(x)</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; <span class="keyword">catch</span> (e) &#123;</span><br><span class="line">        rej(e)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure>
+<ul>
+<li><p>如果then的参数不是函数，需要忽略它，类似于这种情况：</p>
+  <figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">new</span> <span class="built_in">Promise</span>(<span class="function"><span class="params">rs</span> =&gt;</span> rs(<span class="number">5</span>))</span><br><span class="line">    .then()</span><br><span class="line">    .then(<span class="built_in">console</span>.log)</span><br></pre></td></tr></table></figure>
+<p>  其实就是把value和状态往后传递</p>
+  <figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">this</span>.resolveListeners.push(<span class="function">(<span class="params">val</span>) =&gt;</span> &#123;</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">typeof</span> resCb !== <span class="string">'function'</span>) &#123;</span><br><span class="line">        res(val)</span><br><span class="line">        <span class="keyword">return</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">        <span class="keyword">const</span> x = resCb(val)</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (x <span class="keyword">instanceof</span> <span class="built_in">Promise</span>) &#123;</span><br><span class="line">            x.then(res, rej) <span class="comment">// adopt promise x</span></span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            res(x)</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; <span class="keyword">catch</span> (e) &#123;</span><br><span class="line">        rej(e)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure>
+<p>  // rejectListeners也是相同的逻辑</p>
+</li>
+<li><p>如果调用then时, promise的状态已经确定，相应的回调直接运行</p>
+  <figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 注意这里需要异步</span></span><br><span class="line"><span class="keyword">if</span> (status === <span class="string">'resolved'</span>) setTimeout(<span class="function"><span class="params">()</span> =&gt;</span> resolveCb(value), <span class="number">0</span>)</span><br><span class="line"><span class="keyword">if</span> (status === <span class="string">'rejected'</span>) setTimeout(<span class="function"><span class="params">()</span> =&gt;</span> rejectCb(value), <span class="number">0</span>)</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<p>最后，就得到了一个完整的then方法，总结一下，then方法干了两件事，一是注册了回调，二是返回一个新的promise对象。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// resolveCb和rejectCb是相同的逻辑，封装成一个函数</span></span><br><span class="line"><span class="keyword">const</span> thenCallBack = <span class="function">(<span class="params">cb, res, rej, target, val</span>) =&gt;</span> &#123;</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">typeof</span> cb !== <span class="string">'function'</span>) &#123;</span><br><span class="line">        target === <span class="string">'resolve'</span></span><br><span class="line">            ? res(val)</span><br><span class="line">            : rej(val)</span><br><span class="line">        <span class="keyword">return</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">        <span class="keyword">const</span> x = cb(val)</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (x <span class="keyword">instanceof</span> <span class="built_in">Promise</span>) &#123;</span><br><span class="line">            x.then(res, rej) <span class="comment">// adopt promise x</span></span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            res(x)</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; <span class="keyword">catch</span> (e) &#123;</span><br><span class="line">        rej(e)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="built_in">Promise</span>.prototype.then = <span class="function"><span class="keyword">function</span> (<span class="params">resCb, rejCb</span>) </span>&#123;</span><br><span class="line">    <span class="keyword">const</span> status = <span class="keyword">this</span>.status</span><br><span class="line">    <span class="keyword">const</span> value = <span class="keyword">this</span>.value</span><br><span class="line">    <span class="keyword">let</span> thenPromise</span><br><span class="line"></span><br><span class="line">    thenPromise = <span class="keyword">new</span> <span class="built_in">Promise</span>(<span class="function">(<span class="params">res, rej</span>) =&gt;</span> &#123;</span><br><span class="line">        <span class="comment">/**</span></span><br><span class="line"><span class="comment">         * 这里不能使用bind来实现柯里画，规范里规定了:</span></span><br><span class="line"><span class="comment">         * --5: onFulfilled and onRejected must be called as functions</span></span><br><span class="line"><span class="comment">         * (i.e. with no this value))</span></span><br><span class="line"><span class="comment">         */</span></span><br><span class="line">        <span class="keyword">const</span> resolveCb = <span class="function"><span class="params">val</span> =&gt;</span> &#123;</span><br><span class="line">            thenCallBack(resCb, res, rej, <span class="string">'resolve'</span>, val)</span><br><span class="line">        &#125; </span><br><span class="line">        <span class="keyword">const</span> rejectCb = <span class="function"><span class="params">val</span> =&gt;</span> &#123;</span><br><span class="line">            thenCallBack(rejCb, res, rej, <span class="string">'reject'</span>, val)</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (status === <span class="string">'pending'</span>) &#123;</span><br><span class="line">            <span class="keyword">this</span>.resolveListeners.push(resolveCb)</span><br><span class="line">            <span class="keyword">this</span>.rejectListeners.push(rejectCb)</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (status === <span class="string">'resolved'</span>) setTimeout(<span class="function"><span class="params">()</span> =&gt;</span> resolveCb(value), <span class="number">0</span>)</span><br><span class="line">        <span class="keyword">if</span> (status === <span class="string">'rejected'</span>) setTimeout(<span class="function"><span class="params">()</span> =&gt;</span> rejectCb(value), <span class="number">0</span>)</span><br><span class="line">    &#125;)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> thenPromise</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="不同的Promise实现可以互相调用"><a href="#不同的Promise实现可以互相调用" class="headerlink" title="不同的Promise实现可以互相调用"></a>不同的Promise实现可以互相调用</h2><p>首先要明白的是什么叫互相调用，什么情况下会互相调用。之前实现then方法的时候，有一条规则是：如果then方法的回调返回一个promiseA。then返回的promise需要adopt这个promiseA，也就是说，需要处理这种情况：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">new</span> MyPromise(<span class="function"><span class="params">rs</span> =&gt;</span> rs(<span class="number">5</span>))</span><br><span class="line">    .then(<span class="function"><span class="params">val</span> =&gt;</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="built_in">Promise</span>.resolve(<span class="number">5</span>) <span class="comment">// 原生Promise</span></span><br><span class="line">    &#125;)</span><br><span class="line">    .then(<span class="function"><span class="params">val</span> =&gt;</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> Bluebird(<span class="function"><span class="params">r</span> =&gt;</span> r(<span class="number">5</span>)) <span class="comment">// Bluebird的promise</span></span><br><span class="line">    &#125;)</span><br></pre></td></tr></table></figure>
+<p>关于这个，规范里定义了一个叫做The Promise Resolution Procedure的过程，我们需要做的就是把规范翻译一遍，并替代代码中判断promise的地方</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> resolveThenable = <span class="function">(<span class="params">promise, x, resolve, reject</span>) =&gt;</span> &#123;</span><br><span class="line">    <span class="keyword">if</span> (x === promise) &#123;</span><br><span class="line">        <span class="keyword">return</span> reject(<span class="keyword">new</span> <span class="built_in">TypeError</span>(<span class="string">'chain call found'</span>))</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (x <span class="keyword">instanceof</span> <span class="built_in">Promise</span>) &#123;</span><br><span class="line">        <span class="keyword">return</span> x.then(<span class="function"><span class="params">v</span> =&gt;</span> &#123;</span><br><span class="line">            resolveThenable(promise, v, resolve, reject)</span><br><span class="line">        &#125;, reject)</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (x === <span class="literal">null</span> || (<span class="keyword">typeof</span> x !== <span class="string">'object'</span> &amp;&amp; <span class="keyword">typeof</span> x !== <span class="string">'function'</span>)) &#123;</span><br><span class="line">        <span class="keyword">return</span> resolve(x)</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">let</span> called = <span class="literal">false</span></span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">        <span class="comment">// 这里有一个有意思的技巧.</span></span><br><span class="line">        <span class="comment">// 如果then是一个getter，那么通过赋值可以保证getter只被触发一次，避免副作用</span></span><br><span class="line">        <span class="keyword">const</span> then = x.then</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (<span class="keyword">typeof</span> then !== <span class="string">'function'</span>) &#123;</span><br><span class="line">            <span class="keyword">return</span> resolve(x)</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        then.call(x, v =&gt; &#123;</span><br><span class="line">            <span class="keyword">if</span> (called) <span class="keyword">return</span></span><br><span class="line">            called = <span class="literal">true</span></span><br><span class="line">            resolveThenable(promise, v, resolve, reject)</span><br><span class="line">        &#125;, r =&gt; &#123;</span><br><span class="line">            <span class="keyword">if</span> (called) <span class="keyword">return</span></span><br><span class="line">            called = <span class="literal">true</span></span><br><span class="line">            reject(r)</span><br><span class="line">        &#125;)</span><br><span class="line">    &#125; <span class="keyword">catch</span> (e) &#123;</span><br><span class="line">        <span class="keyword">if</span> (called) <span class="keyword">return</span></span><br><span class="line">        reject(e)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>到这里，一个符合标准的Promise就完成了，完整的代码如下：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">Promise</span>(<span class="params">executor</span>) </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">typeof</span> executor !== <span class="string">'function'</span>) &#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> <span class="built_in">Error</span>(<span class="string">'Promise executor must be fucntion'</span>)</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">let</span> status = <span class="string">'pending'</span></span><br><span class="line">    <span class="keyword">let</span> value = <span class="keyword">void</span> <span class="number">0</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">const</span> notify = <span class="function">(<span class="params">target, val</span>) =&gt;</span> &#123;</span><br><span class="line">        target === <span class="string">'resolved'</span></span><br><span class="line">            ? <span class="keyword">this</span>.resolveListeners.forEach(<span class="function"><span class="params">cb</span> =&gt;</span> cb(val))</span><br><span class="line">            : <span class="keyword">this</span>.rejectListeners.forEach(<span class="function"><span class="params">cb</span> =&gt;</span> cb(val))</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">const</span> resolve = <span class="function"><span class="params">val</span> =&gt;</span> &#123;</span><br><span class="line">        <span class="keyword">if</span> (val <span class="keyword">instanceof</span> <span class="built_in">Promise</span>) &#123;</span><br><span class="line">            <span class="keyword">return</span> val.then(resolve, reject)</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        setTimeout(<span class="function"><span class="params">()</span> =&gt;</span> &#123;</span><br><span class="line">            <span class="keyword">if</span> (status !== <span class="string">'pending'</span>) <span class="keyword">return</span></span><br><span class="line"></span><br><span class="line">            status = <span class="string">'resolved'</span></span><br><span class="line">            value = val</span><br><span class="line">            notify(<span class="string">'resolved'</span>, val)</span><br><span class="line">        &#125;, <span class="number">0</span>)</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">const</span> reject = <span class="function"><span class="params">reason</span> =&gt;</span> &#123;</span><br><span class="line">        setTimeout(<span class="function"><span class="params">()</span> =&gt;</span> &#123;</span><br><span class="line">            <span class="keyword">if</span> (status !== <span class="string">'pending'</span>) <span class="keyword">return</span></span><br><span class="line"></span><br><span class="line">            status = <span class="string">'rejected'</span></span><br><span class="line">            value = reason</span><br><span class="line">            notify(<span class="string">'rejected'</span>, reason)</span><br><span class="line">        &#125;, <span class="number">0</span>)</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">this</span>.resolveListeners = []</span><br><span class="line">    <span class="keyword">this</span>.rejectListeners = []</span><br><span class="line"></span><br><span class="line">    <span class="built_in">Object</span>.defineProperty(<span class="keyword">this</span>, <span class="string">'status'</span>, &#123;</span><br><span class="line">        get() &#123;</span><br><span class="line">            <span class="keyword">return</span> status</span><br><span class="line">        &#125;,</span><br><span class="line">        set() &#123;</span><br><span class="line">            <span class="built_in">console</span>.warn(<span class="string">'status is read-only'</span>)</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;)</span><br><span class="line"></span><br><span class="line">    <span class="built_in">Object</span>.defineProperty(<span class="keyword">this</span>, <span class="string">'value'</span>, &#123;</span><br><span class="line">        get() &#123;</span><br><span class="line">            <span class="keyword">return</span> value</span><br><span class="line">        &#125;,</span><br><span class="line">        set() &#123;</span><br><span class="line">            <span class="built_in">console</span>.warn(<span class="string">'value is read-only'</span>)</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">        executor(resolve, reject)</span><br><span class="line">    &#125; <span class="keyword">catch</span> (e) &#123;</span><br><span class="line">        reject(e)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> thenCallBack = <span class="function">(<span class="params">cb, res, rej, target, promise, val</span>) =&gt;</span> &#123;</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">typeof</span> cb !== <span class="string">'function'</span>) &#123;</span><br><span class="line">        target === <span class="string">'resolve'</span></span><br><span class="line">            ? res(val)</span><br><span class="line">            : rej(val)</span><br><span class="line">        <span class="keyword">return</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">        <span class="keyword">const</span> x = cb(val)</span><br><span class="line">        resolveThenable(promise, x, res, rej)</span><br><span class="line">    &#125; <span class="keyword">catch</span> (e) &#123;</span><br><span class="line">        rej(e)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> resolveThenable = <span class="function">(<span class="params">promise, x, resolve, reject</span>) =&gt;</span> &#123;</span><br><span class="line">    <span class="keyword">if</span> (x === promise) &#123;</span><br><span class="line">        <span class="keyword">return</span> reject(<span class="keyword">new</span> <span class="built_in">TypeError</span>(<span class="string">'chain call found'</span>))</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (x <span class="keyword">instanceof</span> <span class="built_in">Promise</span>) &#123;</span><br><span class="line">        <span class="keyword">return</span> x.then(<span class="function"><span class="params">v</span> =&gt;</span> &#123;</span><br><span class="line">            resolveThenable(promise, v, resolve, reject)</span><br><span class="line">        &#125;, reject)</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (x === <span class="literal">null</span> || (<span class="keyword">typeof</span> x !== <span class="string">'object'</span> &amp;&amp; <span class="keyword">typeof</span> x !== <span class="string">'function'</span>)) &#123;</span><br><span class="line">        <span class="keyword">return</span> resolve(x)</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">let</span> called = <span class="literal">false</span></span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">        <span class="comment">// 这里有一个有意思的技巧</span></span><br><span class="line">        <span class="comment">// 如果then是一个getter，那么通过赋值可以保证getter只被触发一次，避免副作用</span></span><br><span class="line">        <span class="keyword">const</span> then = x.then</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (<span class="keyword">typeof</span> then !== <span class="string">'function'</span>) &#123;</span><br><span class="line">            <span class="keyword">return</span> resolve(x)</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        then.call(x, v =&gt; &#123;</span><br><span class="line">            <span class="keyword">if</span> (called) <span class="keyword">return</span></span><br><span class="line">            called = <span class="literal">true</span></span><br><span class="line">            resolveThenable(promise, v, resolve, reject)</span><br><span class="line">        &#125;, r =&gt; &#123;</span><br><span class="line">            <span class="keyword">if</span> (called) <span class="keyword">return</span></span><br><span class="line">            called = <span class="literal">true</span></span><br><span class="line">            reject(r)</span><br><span class="line">        &#125;)</span><br><span class="line">    &#125; <span class="keyword">catch</span> (e) &#123;</span><br><span class="line">        <span class="keyword">if</span> (called) <span class="keyword">return</span></span><br><span class="line">        reject(e)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="built_in">Promise</span>.prototype.then = <span class="function"><span class="keyword">function</span> (<span class="params">resCb, rejCb</span>) </span>&#123;</span><br><span class="line">    <span class="keyword">const</span> status = <span class="keyword">this</span>.status</span><br><span class="line">    <span class="keyword">const</span> value = <span class="keyword">this</span>.value</span><br><span class="line">    <span class="keyword">let</span> thenPromise</span><br><span class="line"></span><br><span class="line">    thenPromise = <span class="keyword">new</span> <span class="built_in">Promise</span>(<span class="function">(<span class="params">res, rej</span>) =&gt;</span> &#123;</span><br><span class="line">        <span class="keyword">const</span> resolveCb = <span class="function"><span class="params">val</span> =&gt;</span> &#123;</span><br><span class="line">            thenCallBack(resCb, res, rej, <span class="string">'resolve'</span>, thenPromise, val)</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">const</span> rejectCb = <span class="function"><span class="params">val</span> =&gt;</span> &#123;</span><br><span class="line">            thenCallBack(rejCb, res, rej, <span class="string">'reject'</span>, thenPromise, val)</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (status === <span class="string">'pending'</span>) &#123;</span><br><span class="line">            <span class="keyword">this</span>.resolveListeners.push(resolveCb)</span><br><span class="line">            <span class="keyword">this</span>.rejectListeners.push(rejectCb)</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (status === <span class="string">'resolved'</span>) setTimeout(<span class="function"><span class="params">()</span> =&gt;</span> resolveCb(value), <span class="number">0</span>)</span><br><span class="line">        <span class="keyword">if</span> (status === <span class="string">'rejected'</span>) setTimeout(<span class="function"><span class="params">()</span> =&gt;</span> rejectCb(value), <span class="number">0</span>)</span><br><span class="line">    &#125;)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> thenPromise</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><a href="https://github.com/promises-aplus/promises-tests" target="_blank" rel="noopener">测试脚本</a></p>
+<h2 id="关于promise的一些零散知识"><a href="#关于promise的一些零散知识" class="headerlink" title="关于promise的一些零散知识"></a>关于promise的一些零散知识</h2><ul>
+<li>Promise.resolve就是本文所实现的resolveThenable，并不是简单的用来返回一个resolved状态的函数，它返回的promise对象的状态也并不一定是resolved。</li>
+<li>promise.then(rs, rj)和promise.then(rs).catch(rj)是有区别的，区别在于当rs出错时，后一种方法可以进行错误处理。</li>
+</ul>
+<h2 id="感想与总结"><a href="#感想与总结" class="headerlink" title="感想与总结"></a>感想与总结</h2><p>实现Promise的过程其实并没有我预想的那么难，所谓的Promise的原理我感觉就是类似于观察者模式，so，不要有畏难情绪，我上我也行^_^。</p>
+
+        
+        </div>
+        <!--
+        <footer class="article-footer">
+            <div class="share-container">
+
+
+
+</div>
+
+    <a data-url="moruo.vip/2018/06/23/promise/" data-id="ck8ldy0mj0007rd8qkeu9r8ak" class="article-share-link"><i class="fa fa-share"></i>分享到</a>
+<script>
+    (function ($) {
+        // Prevent duplicate binding
+        if (typeof(__SHARE_BUTTON_BINDED__) === 'undefined' || !__SHARE_BUTTON_BINDED__) {
+            __SHARE_BUTTON_BINDED__ = true;
+        } else {
+            return;
+        }
+        $('body').on('click', function() {
+            $('.article-share-box.on').removeClass('on');
+        }).on('click', '.article-share-link', function(e) {
+            e.stopPropagation();
+
+            var $this = $(this),
+                url = $this.attr('data-url'),
+                encodedUrl = encodeURIComponent(url),
+                id = 'article-share-box-' + $this.attr('data-id'),
+                offset = $this.offset(),
+                box;
+
+            if ($('#' + id).length) {
+                box = $('#' + id);
+
+                if (box.hasClass('on')){
+                    box.removeClass('on');
+                    return;
+                }
+            } else {
+                var html = [
+                    '<div id="' + id + '" class="article-share-box">',
+                        '<input class="article-share-input" value="' + url + '">',
+                        '<div class="article-share-links">',
+                            '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="fa fa-twitter article-share-twitter" target="_blank" title="Twitter"></a>',
+                            '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="fa fa-facebook article-share-facebook" target="_blank" title="Facebook"></a>',
+                            '<a href="http://pinterest.com/pin/create/button/?url=' + encodedUrl + '" class="fa fa-pinterest article-share-pinterest" target="_blank" title="Pinterest"></a>',
+                            '<a href="https://plus.google.com/share?url=' + encodedUrl + '" class="fa fa-google article-share-google" target="_blank" title="Google+"></a>',
+                        '</div>',
+                    '</div>'
+                ].join('');
+
+              box = $(html);
+
+              $('body').append(box);
+            }
+
+            $('.article-share-box.on').hide();
+
+            box.css({
+                top: offset.top + 25,
+                left: offset.left
+            }).addClass('on');
+
+        }).on('click', '.article-share-box', function (e) {
+            e.stopPropagation();
+        }).on('click', '.article-share-box-input', function () {
+            $(this).select();
+        }).on('click', '.article-share-box-link', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            window.open(this.href, 'article-share-box-window-' + Date.now(), 'width=500,height=450');
+        });
+    })(jQuery);
+</script>
+
+            
+    
+
+        </footer>
+        -->
+    </div>
+    
+        
+<nav id="article-nav">
+    
+        <a href="/2018/09/16/soft-bind/" id="article-nav-newer" class="article-nav-link-wrap">
+            <strong class="article-nav-caption">上一篇</strong>
+            <div class="article-nav-title">
+                
+                    soft-bind 函数
+                
+            </div>
+        </a>
+    
+    
+</nav>
+
+
+    
+</article>
+
+
+    
+    
+
+</section>
+            
+                
+<aside id="sidebar">
+   
+        
+    <div class="widget-wrap">
+        <h3 class="widget-title">最新文章</h3>
+        <div class="widget">
+            <ul id="recent-post" class="no-thumbnail">
+                
+                    <li>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/article/">article</a></p>
+                            <p class="item-title"><a href="/2020/01/01/2020年计划/" class="title">2020年度挑战计划</a></p>
+                            <p class="item-date"><time datetime="2020-01-01T02:29:00.000Z" itemprop="datePublished">2020-01-01</time></p>
+                        </div>
+                    </li>
+                
+                    <li>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/article/">article</a></p>
+                            <p class="item-title"><a href="/2019/11/07/部署es6代码/" class="title">生产环境部署es6代码</a></p>
+                            <p class="item-date"><time datetime="2019-11-07T15:28:00.000Z" itemprop="datePublished">2019-11-07</time></p>
+                        </div>
+                    </li>
+                
+                    <li>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/article/">article</a></p>
+                            <p class="item-title"><a href="/2019/09/18/大数据量场景下的Vue性能优化/" class="title">大数据量场景下的Vue性能优化</a></p>
+                            <p class="item-date"><time datetime="2019-09-18T12:10:00.000Z" itemprop="datePublished">2019-09-18</time></p>
+                        </div>
+                    </li>
+                
+                    <li>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/article/">article</a></p>
+                            <p class="item-title"><a href="/2019/06/04/hookEvent of Vue/" class="title">hookEvent of Vue</a></p>
+                            <p class="item-date"><time datetime="2019-06-04T14:22:20.000Z" itemprop="datePublished">2019-06-04</time></p>
+                        </div>
+                    </li>
+                
+                    <li>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/article/">article</a></p>
+                            <p class="item-title"><a href="/2019/02/13/localStorage操作指北/" class="title">localStorage操作指北</a></p>
+                            <p class="item-date"><time datetime="2019-02-13T13:29:00.000Z" itemprop="datePublished">2019-02-13</time></p>
+                        </div>
+                    </li>
+                
+            </ul>
+        </div>
+    </div>
+
+    
+        
+    <div class="widget-wrap">
+        <h3 class="widget-title">归档</h3>
+        <div class="widget">
+            <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/01/">一月 2020</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/11/">十一月 2019</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/09/">九月 2019</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/06/">六月 2019</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/02/">二月 2019</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/12/">十二月 2018</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/11/">十一月 2018</a><span class="archive-list-count">3</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/10/">十月 2018</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/09/">九月 2018</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/06/">六月 2018</a><span class="archive-list-count">1</span></li></ul>
+        </div>
+    </div>
+
+    
+        
+    <div class="widget-wrap">
+        <h3 class="widget-title">标签</h3>
+        <div class="widget">
+            <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/tags/Mutation-Observer/">Mutation Observer</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Vue/">Vue</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Vue渲染原理/">Vue渲染原理</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ajax/">ajax</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/algorithm/">algorithm</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/axios/">axios</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/chrome插件/">chrome插件</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/dialoag/">dialoag</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/javascript/">javascript</a><span class="tag-list-count">6</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/localStorage/">localStorage</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/npm/">npm</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/promise/">promise</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/react/">react</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/recursion/">recursion</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/virtual-dom/">virtual-dom</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/优化/">优化</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/年度挑战/">年度挑战</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/性能优化/">性能优化</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/生活/">生活</a><span class="tag-list-count">1</span></li></ul>
+        </div>
+    </div>
+
+    
+        
+    <div class="widget-wrap">
+        <h3 class="widget-title">标签云</h3>
+        <div class="widget tagcloud">
+            <a href="/tags/Mutation-Observer/" style="font-size: 10px;">Mutation Observer</a> <a href="/tags/Vue/" style="font-size: 16.67px;">Vue</a> <a href="/tags/Vue渲染原理/" style="font-size: 10px;">Vue渲染原理</a> <a href="/tags/ajax/" style="font-size: 10px;">ajax</a> <a href="/tags/algorithm/" style="font-size: 10px;">algorithm</a> <a href="/tags/axios/" style="font-size: 10px;">axios</a> <a href="/tags/chrome插件/" style="font-size: 10px;">chrome插件</a> <a href="/tags/dialoag/" style="font-size: 10px;">dialoag</a> <a href="/tags/javascript/" style="font-size: 20px;">javascript</a> <a href="/tags/localStorage/" style="font-size: 10px;">localStorage</a> <a href="/tags/npm/" style="font-size: 10px;">npm</a> <a href="/tags/promise/" style="font-size: 10px;">promise</a> <a href="/tags/react/" style="font-size: 10px;">react</a> <a href="/tags/recursion/" style="font-size: 10px;">recursion</a> <a href="/tags/virtual-dom/" style="font-size: 10px;">virtual-dom</a> <a href="/tags/优化/" style="font-size: 10px;">优化</a> <a href="/tags/年度挑战/" style="font-size: 10px;">年度挑战</a> <a href="/tags/性能优化/" style="font-size: 13.33px;">性能优化</a> <a href="/tags/生活/" style="font-size: 10px;">生活</a>
+        </div>
+    </div>
+
+    
+        
+    <div class="widget-wrap widget-list">
+        <h3 class="widget-title">链接</h3>
+        <div class="widget">
+            <ul>
+                
+                    <li>
+                        <a href="http://hexo.io">Hexo</a>
+                    </li>
+                
+            </ul>
+        </div>
+    </div>
+
+
+    
+    <div id="toTop" class="fa fa-angle-up"></div>
+</aside>
+
+            
+        </div>
+        <footer id="footer">
+    <div class="outer">
+        <div id="footer-info" class="inner">
+            &copy; 2020 Mor<br>
+            Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>. Theme by <a href="http://github.com/ppoffice">PPOffice</a>
+            <br>
+            <!--
+            <a href="https://www.upyun.com/?utm_source=lianmeng&utm_medium=referral" target="_blank">又拍云提供CDN及云存储服务</a>
+            <img src="css/images/youpai.png" style="width: 36px;position: relative;top: 12px;margin-left: 10px;">
+            -->
+        </div>
+    </div>
+</footer>
+        
+
+
+    
+        <script src="/libs/lightgallery/js/lightgallery.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-thumbnail.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-pager.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-autoplay.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-fullscreen.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-zoom.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-hash.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-share.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-video.min.js"></script>
+    
+    
+        <script src="/libs/justified-gallery/jquery.justifiedGallery.min.js"></script>
+    
+    
+
+
+
+<!-- Custom Scripts -->
+<script src="/js/main.js"></script>
+
+    </div>
+</body>
+</html>
