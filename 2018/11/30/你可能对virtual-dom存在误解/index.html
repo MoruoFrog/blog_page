@@ -13,7 +13,7 @@
 <meta property="og:site_name" content="Moruo&#39;s Blog">
 <meta property="og:description" content="下面这段代码，会产生什么样的结果? 1234567function sleep(time) &amp;#123;  const start = Date.now()  while (Date.now() - start &amp;lt; time * 1000) &amp;#123;&amp;#125;&amp;#125;document.body.style.background = &apos;black&apos;sleep(5)">
 <meta property="og:locale" content="zh-CN">
-<meta property="og:updated_time" content="2020-01-06T07:54:49.484Z">
+<meta property="og:updated_time" content="2020-04-15T10:31:13.058Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="你可能对virtual-dom存在误解">
 <meta name="twitter:description" content="下面这段代码，会产生什么样的结果? 1234567function sleep(time) &amp;#123;  const start = Date.now()  while (Date.now() - start &amp;lt; time * 1000) &amp;#123;&amp;#125;&amp;#125;document.body.style.background = &apos;black&apos;sleep(5)">
@@ -251,6 +251,9 @@
 <p>再来</p>
 <figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">document</span>.body.style.background = <span class="string">'blue'</span></span><br><span class="line">sleep(<span class="number">2</span>)</span><br><span class="line"><span class="built_in">document</span>.body.style.background = <span class="string">'red'</span></span><br><span class="line">sleep(<span class="number">3</span>)</span><br></pre></td></tr></table></figure>
 <p>异步吗？batch更新吗？<br>更改了dom对象，浏览器也并不会立刻立马去渲染，那么，js所能触及到的dom对象，在浏览器层面，是否也是virtual-dom呢？<br>给浏览器写代码的人各各都是人才，这种性能优化肯定是会做的。</p>
+<blockquote>
+<p>update: 这里是我想当然了，js执行的进程和dom渲染的进程是互斥的，ui的渲染需要等到js执行完成才会进行 - 2020.4.15</p>
+</blockquote>
 <h2 id="什么是virtual-dom"><a href="#什么是virtual-dom" class="headerlink" title="什么是virtual-dom"></a>什么是virtual-dom</h2><p>网页是什么，我认为是信息的载体，而html + css生成的dom，就是一种结构化表达信息的数据结构，是浏览器对信息的抽象。</p>
 <p>那么这种抽象只有dom一种吗？当然不是，它可以有无数种，只要能够完整的表达结构化的信息就行，它可以跟dom结构类似，是一棵树，比如传统的virtual-dom实现；理论上它也可以是其它的数据结构。</p>
 <p>所以，我认为一个可以完整描述信息的对象，就是virtual-dom</p>
